@@ -47,7 +47,7 @@ var mkdir, override bool
 var authFlag string
 
 func init() {
-	initCmd.Flags().BoolVar(&mkdir, "mkdir", false, "Should Folderr make directories if they don't exist")
+	initCmd.Flags().BoolVar(&mkdir, "mkdir", false, "Make directories if they don't exist")
 	initCmd.Flags().BoolVarP(&override, "override", "o", false, "Override previous settings")
 	initCmd.Flags().StringVarP(&authFlag, "authorization", "a", "", "Authorization token for private repositories")
 	rootCmd.AddCommand(initCmd)
@@ -220,6 +220,9 @@ func interactiveRepository() {
 
 // Functions based on args instead of interactive
 func dirStatic(args []string) {
+	if len(args) < 1 {
+		return
+	}
 	dir := manipulateDir(args[0])
 	exists := dirChecks(dir)
 	if !exists && !mkdir {
@@ -227,7 +230,7 @@ func dirStatic(args []string) {
 		return
 	} else if !exists && mkdir {
 		fmt.Println("Creating Directory \"" + dir + "\"...")
-		err := os.MkdirAll(dir, 0660)
+		err := os.MkdirAll(dir, 0760)
 		if err != nil {
 			fmt.Println("Failed to create directory", dir)
 			panic(err)
@@ -242,6 +245,9 @@ func dirStatic(args []string) {
 }
 
 func repositoryStatic(args []string) {
+	if len(args) < 2 {
+		return
+	}
 	url, err := url.Parse(args[1])
 	if err != nil {
 		panic(err)
@@ -276,29 +282,31 @@ func repositoryStatic(args []string) {
 }
 
 var initCmd = &cobra.Command{
-	Use:       "init [directory] [repository]",
-	Short:     "Initalize your Folderr Manage config",
-	Long:      "Initalize your Folderr Manage config interactively or non-interactively. If a repository is provided non-interactively, the authorization flag must be supplied if it is private.",
+	Use:   "init [directory] [repository]",
+	Short: "Initalize your Folderr Manager config",
+	Long: `Initalize your Folderr Manager config interactively or non-interactively.
+If a repository is provided non-interactively, the authorization flag MUST be supplied if it is private or else it will fail.
+Interactivity happens when you do not provide the listed arguments (excluding flags)`,
 	ValidArgs: []string{"directory", "repository"},
 	Run: func(cmd *cobra.Command, args []string) {
 		isSet := viper.IsSet("directory")
 		if override {
 			isSet = false
 		}
-		if !isSet && args[0] == "" {
+		if !isSet && len(args) == 0 {
 			interactiveDirectory()
 		}
-		if !isSet && args[0] != "" {
+		if !isSet && len(args) > 0 {
 			dirStatic(args)
 		}
 		isSet = viper.IsSet("repository")
 		if override {
 			isSet = false
 		}
-		if !isSet && (args[1] == "" || strings.Contains(args[1], "--")) {
+		if !isSet && (len(args) < 2 || strings.Contains(args[1], "--")) {
 			interactiveRepository()
 		}
-		if !isSet && args[1] != "" && !strings.Contains(args[1], "--") {
+		if !isSet && len(args) > 1 && !strings.Contains(args[1], "--") {
 			repositoryStatic(args)
 		}
 		fmt.Println("It looks like your Folderr CLI is initialized!")

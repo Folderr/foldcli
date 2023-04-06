@@ -11,7 +11,7 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "folderr-cli",
+	Use:   "folderr",
 	Short: "A CLI to manage Folderr installations",
 	Long: `A CLI to setup and manage your Folderr instance For example:
 folderr init /home/folderr/folderr
