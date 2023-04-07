@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var authFlag string
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "folderr",

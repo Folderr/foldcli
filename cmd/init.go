@@ -44,7 +44,6 @@ func readConfig() {
 }
 
 var mkdir, override bool
-var authFlag string
 
 func init() {
 	initCmd.Flags().BoolVar(&mkdir, "mkdir", false, "Make directories if they don't exist")
@@ -99,7 +98,10 @@ func dirChecks(input string) bool {
 }
 
 // Interactive setup
-func interactiveDirectory() {
+func interactiveDirectory() (bool, error) {
+	if viper.IsSet("directory") && !override {
+		return true, nil
+	}
 	prompt := promptui.Prompt{
 		Label:     "It would seem you have not configured a directory for where Folderr is. Would you like to do that",
 		IsConfirm: true,
@@ -107,7 +109,7 @@ func interactiveDirectory() {
 	result, err := prompt.Run()
 	if err != nil && err.Error() != "" {
 		fmt.Println("Error: ", err)
-		panic(err)
+		return false, err
 	}
 	if len(result) > 0 && err == nil {
 		dirPrompt := promptui.Prompt{
@@ -115,7 +117,7 @@ func interactiveDirectory() {
 		}
 		result, err = dirPrompt.Run()
 		if err != nil {
-			panic(err)
+			return false, err
 		}
 		result = manipulateDir(result)
 		exists := dirChecks(result)
@@ -127,14 +129,14 @@ func interactiveDirectory() {
 			shouldMake, err := mkdirPrompt.Run()
 			if err != nil && err.Error() != "" {
 				fmt.Println("Error: ", err)
-				panic(err)
+				return false, err
 			}
 			if len(shouldMake) > 0 && err == nil {
 				fmt.Println("Creating Directory \"" + result + "\"...")
 				err := os.MkdirAll(result, 0660)
 				if err != nil {
 					fmt.Println("Failed to create directory", result)
-					panic(err)
+					return false, err
 				}
 			}
 		}
@@ -143,11 +145,15 @@ func interactiveDirectory() {
 	}
 	err = viper.WriteConfig()
 	if err != nil {
-		panic(err)
+		return false, err
 	}
+	return true, nil
 }
 
-func interactiveRepository() {
+func interactiveRepository() (bool, error) {
+	if viper.IsSet("repository") && !override {
+		return true, nil
+	}
 	prompt := promptui.Prompt{
 		Label: "What URL is the repository you're using for Folderr",
 		Validate: func(input string) error {
@@ -163,11 +169,11 @@ func interactiveRepository() {
 	}
 	inputUrl, err := prompt.Run()
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 	parsed, err := url.Parse(inputUrl)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 	if parsed.Scheme != "https" {
 		fmt.Println("Cannot work with non-HTTPS urls. Limitation issue.")
@@ -180,7 +186,7 @@ func interactiveRepository() {
 	}
 	needAuth, err := prompt.Run()
 	if err != nil && err.Error() != "" {
-		panic(err)
+		return false, err
 	}
 	gitOptions := &git.CloneOptions{
 		URL: inputUrl,
@@ -191,7 +197,7 @@ func interactiveRepository() {
 		}
 		resp, err := prompt.Run()
 		if err != nil {
-			panic(err)
+			return false, err
 		}
 		if strings.ToLower(resp) == "no" {
 			shouldFail = true
@@ -209,48 +215,61 @@ func interactiveRepository() {
 	fmt.Println("Cloning the repository to see if its valid...")
 	repo, err := git.Clone(memory.NewStorage(), nil, gitOptions)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
-	if repo != nil {
-		fmt.Println("Setting repository to be", inputUrl)
-		viper.Set("repository", inputUrl)
-		viper.WriteConfig()
+	if repo == nil {
+		return false, nil
 	}
+	fmt.Println("Setting repository to be", inputUrl)
+	viper.Set("repository", inputUrl)
+	err = viper.WriteConfig()
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // Functions based on args instead of interactive
-func dirStatic(args []string) {
+func dirStatic(args []string) (bool, error) {
+	if viper.IsSet("directory") && !override {
+		return true, nil
+	}
 	if len(args) < 1 {
-		return
+		return false, nil
 	}
 	dir := manipulateDir(args[0])
 	exists := dirChecks(dir)
 	if !exists && !mkdir {
 		fmt.Println("Cannot use a directory that does not exist")
-		return
+		return false, nil
 	} else if !exists && mkdir {
 		fmt.Println("Creating Directory \"" + dir + "\"...")
 		err := os.MkdirAll(dir, 0760)
 		if err != nil {
 			fmt.Println("Failed to create directory", dir)
-			panic(err)
+			return false, err
 		}
 	}
 	fmt.Println("Setting directory to be", dir)
 	viper.Set("directory", dir)
 	err := viper.WriteConfig()
 	if err != nil {
-		panic(err)
+		return false, err
 	}
+	return true, nil
 }
 
-func repositoryStatic(args []string) {
+func repositoryStatic(args []string) (bool, error) {
+	if viper.IsSet("repository") && !override {
+		return true, nil
+	}
 	if len(args) < 2 {
-		return
+		return false, nil
 	}
 	url, err := url.Parse(args[1])
 	if err != nil {
-		panic(err)
+		fmt.Println('f')
+		return false, err
 	}
 	if url.Host == "" || url.Scheme == "" {
 		fmt.Println("URL is invalid!")
@@ -272,13 +291,19 @@ func repositoryStatic(args []string) {
 	fmt.Println("Cloning the repository to see if its valid...")
 	repo, err := git.Clone(memory.NewStorage(), nil, gitOptions)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
-	if repo != nil {
-		fmt.Println("Setting repository to be", args[1])
-		viper.Set("repository", args[1])
-		viper.WriteConfig()
+	if repo == nil {
+		return false, nil
 	}
+	fmt.Println("Setting repository to be", args[1])
+	viper.Set("repository", args[1])
+	err = viper.WriteConfig()
+	if err != nil {
+		fmt.Println(err)
+		return false, nil
+	}
+	return true, nil
 }
 
 var initCmd = &cobra.Command{
@@ -289,26 +314,39 @@ If a repository is provided non-interactively, the authorization flag MUST be su
 Interactivity happens when you do not provide the listed arguments (excluding flags)`,
 	ValidArgs: []string{"directory", "repository"},
 	Run: func(cmd *cobra.Command, args []string) {
-		isSet := viper.IsSet("directory")
-		if override {
-			isSet = false
+		var fails []string
+		var err error
+		noFail := true
+		if len(args) == 0 {
+			noFail, err = interactiveDirectory()
 		}
-		if !isSet && len(args) == 0 {
-			interactiveDirectory()
+		if len(args) > 0 {
+			noFail, err = dirStatic(args)
 		}
-		if !isSet && len(args) > 0 {
-			dirStatic(args)
+		if err != nil {
+			panic(err)
 		}
-		isSet = viper.IsSet("repository")
-		if override {
-			isSet = false
+		if !noFail {
+			fails = append(fails, "directory")
 		}
-		if !isSet && (len(args) < 2 || strings.Contains(args[1], "--")) {
-			interactiveRepository()
+		if len(args) < 2 || strings.Contains(args[1], "--") {
+			noFail, err = interactiveRepository()
 		}
-		if !isSet && len(args) > 1 && !strings.Contains(args[1], "--") {
-			repositoryStatic(args)
+		if len(args) > 1 && !strings.Contains(args[1], "--") {
+			noFail, err = repositoryStatic(args)
 		}
-		fmt.Println("It looks like your Folderr CLI is initialized!")
+		if err != nil {
+			panic(err)
+		}
+		if !noFail {
+			fails = append(fails, "repository")
+		}
+
+		if len(fails) > 0 {
+			fmt.Println("One or more aspects of setup failed.")
+			fmt.Println("Failures:", strings.Join(fails, ", "))
+		} else {
+			fmt.Println("It looks like your Folderr CLI is initialized!")
+		}
 	},
 }
