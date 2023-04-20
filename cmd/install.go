@@ -1,0 +1,378 @@
+/*
+Copyright © 2023 NAME HERE <EMAIL ADDRESS>
+*/
+package cmd
+
+import (
+	"os"
+	"os/exec"
+	"strconv"
+	"strings"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/storer"
+	transport "github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
+func findCommandV(command string, hasPrefix bool, prefix string) (string, error) {
+	execCmd, err := findCommand(command, []string{"-v"})
+	if err != nil {
+		return "", err
+	}
+	output, err := execCmd.CombinedOutput()
+	if err != nil {
+		printf("It would seem I encountered an error. Is %v installed?\n", command)
+		println("Here's the error:", err)
+		return "", err
+	}
+	printf("Printing output from executing \"%v -v\"\n", command)
+	// transform output into integers.
+	out := string(output)
+	out = strings.TrimSpace(out)
+	println(out)
+	if !hasPrefix {
+		return out, nil
+	}
+	if strings.HasPrefix(out, prefix) {
+		out, _ = strings.CutPrefix(out, prefix)
+	} else {
+		printf("Got unexpected output from running \"%v -v\". Contact developers.\n", command)
+		println("Contact developers at https://github.com/Folderr/Manager/issues")
+		println("Output:", out)
+		return "", nil
+	}
+	return out, nil
+}
+
+func findCommand(command string, args []string) (*exec.Cmd, error) {
+	cmdPath, err := exec.LookPath(command)
+	if err != nil {
+		printf("I can't find %v. Is %v installed?\n", command, command)
+		println("Error for debug purposes:", err)
+		return nil, err
+	}
+	return exec.Command(cmdPath, args...), nil
+}
+
+func cloneFolderr(options *git.CloneOptions) (*git.Repository, error) {
+	if dry {
+		printf("Cloning in directory %v for dry-run mode\n", config.directory)
+		repo, err := git.PlainClone(config.directory, false, options)
+		return repo, err
+	}
+	repo, err := git.PlainClone(config.directory, false, options)
+	return repo, err
+}
+
+// installCmd represents the install command
+var installCmd = &cobra.Command{
+	Use:   "install",
+	Short: "Install Folderr into the setup directory",
+	Long:  `Checks for Folderrs dependencies and installs Folderr`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if !config.canInstall {
+			println("Folderr CLI is not initialized. Run \"folderr init\" to fix this issue.")
+			return
+		}
+		println("Checking if NodeJS is installed")
+		out, err := findCommandV("node", true, "v")
+		if err != nil {
+			panic(err)
+		}
+		if out == "" {
+			println("NodeJS not installed. Aborting.")
+			println("Install Node before running this command!")
+			return
+		}
+		println("NodeJS appears to be installed!")
+		// ensure NPM is installed
+		// we don't care about the actual version tbh.
+		println("Checking if NPM is installed")
+		npm, err := findCommandV("npm", false, "")
+		if err != nil {
+			panic(err)
+		}
+		if npm == "" {
+			println("NPM not installed. Aborting.")
+			println("Install NPM before running this command!")
+			return
+		}
+		println("NPM appears to be installed")
+		println("Checking for TypeScript installation")
+		tsc, err := findCommandV("tsc", true, "Version ")
+		if err != nil {
+			panic(err)
+		}
+		if tsc == "" {
+			println("TypeScript not installed. Aborting.")
+			println("Install TypeScript before running this command!")
+			return
+		}
+		println("TypeScript appears to be installed")
+
+		// Turn Node version into a int!
+		versions := []int{}
+		for _, i := range strings.Split(out, ".") {
+			j, err := strconv.Atoi(i)
+			if err != nil {
+				panic(err)
+			}
+			versions = append(versions, j)
+		}
+		// Check node version compatibility
+		// Future versions should use a Matrix included with the repository.
+		// like say the engines field in the package.json
+		println("Checking Node version for support & compatibility")
+		if 16 >= versions[0] && versions[0] <= 18 {
+			println("Supported")
+		} else if versions[0] <= 16 {
+			println("Your Node Version is too old!")
+			println("Update your Node version before running this command!")
+			return
+		} else if versions[0] >= 20 {
+			println("We're not sure Folderr will work with this new of a version of Node")
+		} else if versions[0] >= 18 {
+			println("Your Node version is not tested but should work")
+		}
+
+		// Check install folder for Folderr repository
+		repo, err := git.PlainOpen(config.directory)
+		if err != nil && !strings.Contains(err.Error(), "repository does not exist") {
+			println("An error occurred while checking if the repository already exists")
+			println("Error:", err)
+			panic(err)
+		}
+		// If the repo exists, consider Folderr installed.
+		// If in dry-run mode we can ignore this, as no changes occur.
+		if repo != nil && !dry {
+			println("Found repository, Folderr is installed.")
+			os.Exit(1)
+		}
+
+		// Clone Folderr.
+		gitOptions := &git.CloneOptions{
+			URL: config.repository,
+		}
+		if authFlag != "" {
+			gitOptions.Auth = &transport.BasicAuth{
+				Username: "git",
+				Password: authFlag,
+			}
+		}
+
+		println("Cloning repository...")
+		repo, err = cloneFolderr(gitOptions)
+		if err != nil {
+			println("An Error Occurred while cloning the repository. Error:", err)
+			panic(err)
+		}
+		if repo == nil {
+			println("Cannot find the repository for some reason (Not Found).")
+			os.Exit(1)
+		}
+
+		// Get tags to checkout
+		tags, err := repo.Tags()
+		if err != nil {
+			println("An error occurred while fetching the repository. Error:", err)
+		}
+		highestVer, highest := determineHighestVersionTags(tags)
+		// Determine if tag or commit based releases should be used.
+		var releaseType string
+		if len(highestVer) < 1 || highestVer[0] < 2 {
+			println("Not using Tags for updating...")
+			println("Reason: Latest tag is too old. (Pre V2)")
+			viper.Set("releaseType", "commit")
+		} else {
+			releaseType = "tag"
+			viper.Set("releaseType", "tag")
+			viper.Set("release", highest.Name().Short())
+		}
+		if !dry {
+			err = viper.WriteConfig()
+			if err != nil {
+				println("Error Occurred while writing config:", err)
+				panic(err)
+			}
+		}
+		println("Clone successful")
+
+		// Get the work tree
+		tree, err := repo.Worktree()
+		if err != nil {
+			println("error Occurred while getting Work Tree:", err)
+			panic(err)
+		}
+		// Check out the CORRECT release type
+		if releaseType == "tag" {
+			println("Checking out tag", highest.Name().Short())
+			err = tree.Checkout(&git.CheckoutOptions{
+				Hash: highest.Hash(),
+			})
+			if err != nil {
+				println("Failed to check out tag", highest.Name().Short(), "with error:", err)
+				panic(err)
+			}
+			println("Checked out tag", highest.Name().Short())
+		} else {
+			if err != nil {
+				println("Error while reading the work tree:", err)
+				panic(err)
+			}
+			branches, err := repo.Branches()
+			if err != nil {
+				println("Error while loading branches", err)
+			}
+			var branch *plumbing.Reference
+			branches.ForEach(func(r *plumbing.Reference) error {
+				if r.Name().Short() == "master" {
+					branch = r
+				} else if r.Name().Short() == "main" && branch == nil {
+					branch = r
+				} else if r.Name().Short() == "dev" && branch == nil {
+					branch = r
+				}
+				return nil
+			})
+			if branch == nil {
+				println("FATAL: Suitable Branch Not Found")
+				os.Exit(1)
+			}
+			err = tree.Checkout(&git.CheckoutOptions{Branch: branch.Name()})
+			if err != nil {
+				println("Error while checking out branch", branch.Name().Short()+",", "error:", err)
+				panic(err)
+			}
+		}
+		println("Checkout successful")
+
+		// REMOVE AFTER TESTING
+		// IMPL: install dependencies...
+		cwd, err := os.Getwd()
+		if err != nil {
+			panic(err)
+		}
+		err = os.Chdir(config.directory)
+		if err != nil {
+			panic(err)
+		}
+
+		args = []string{"install"}
+		if dry {
+			args = append(args, "--dry-run")
+		}
+		npmCmd, err := findCommand("npm", args)
+		if err != nil {
+			panic(err)
+		}
+		output, err := npmCmd.CombinedOutput()
+		if err != nil {
+			if len(output) > 0 {
+				println("NPM install failed, here's the output")
+				println(string(output))
+			}
+			panic(err)
+		}
+		// remove after dev
+		println("Output from npm", strings.Join(args, " "))
+		println(string(output))
+		os.Chdir(cwd)
+		println("Install seems to have gone correctly.")
+		printf(`To build Folderr go to "%v" and type "npm run build:production"`, config.directory)
+
+		if dry {
+			return
+		}
+	},
+}
+
+func determineHighestVersionTags(tags storer.ReferenceIter) ([]int, *plumbing.Reference) {
+	var highest *plumbing.Reference
+	var highestVer []int = []int{}
+	tags.ForEach(func(r *plumbing.Reference) error {
+		if !strings.HasPrefix(r.Name().Short(), "v") && !strings.HasPrefix(r.Name().Short(), "V") {
+			return nil
+		}
+		if highest == nil {
+			highest = r
+			return nil
+		}
+		// convert into versions
+		highestStr := highest.Name().Short()
+		highestStr, _ = strings.CutPrefix(highestStr, "v")
+		highestStr, _ = strings.CutPrefix(highestStr, "V")
+		current := r.Name().Short()
+		current, _ = strings.CutPrefix(current, "v")
+		current, _ = strings.CutPrefix(current, "V")
+		for _, i := range strings.Split(highestStr, ".") {
+			j, err := strconv.Atoi(i)
+			if err != nil {
+				panic(err)
+			}
+			highestVer = append(highestVer, j)
+		}
+		var currentVer []int = []int{}
+		for _, item := range strings.Split(current, ".") {
+			j, err := strconv.Atoi(item)
+			if err != nil {
+				panic(err)
+			}
+			currentVer = append(currentVer, j)
+		}
+		max := len(currentVer)
+		if len(currentVer) > len(highestVer) {
+			max = len(highestVer)
+		}
+		status := []int{}
+		for i := 0; i < max; i++ {
+			if currentVer[i] > highestVer[i] {
+				status = append(status, 1)
+			} else if currentVer[i] == highestVer[i] {
+				status = append(status, 0)
+			} else {
+				status = append(status, -1)
+			}
+		}
+		// NOTE: works fine with 3 levels of versioning.
+		// Unsure if works with more...
+		canUpdate := false
+		// if status[0] >= 0 major is higher or same
+		// if status[1] >= 0 minor is higher or same
+		// if status[2] >= 0 patch is higher or same
+		// if status[2] < 0 but status[1] > 0 then minor is higher
+		// if status[0] < 0 version is lower.
+		if status[0] >= 0 && status[1] >= 0 {
+			if len(status) > 2 && status[2] >= 0 {
+				for i := 2; i < len(status); i++ {
+					if status[i] >= 0 {
+						canUpdate = true
+					}
+				}
+			} else if status[1] > 0 {
+				canUpdate = true
+			}
+		}
+		if canUpdate {
+			highest = r
+		}
+		return nil
+	})
+	return highestVer, highest
+}
+
+func init() {
+	rootCmd.AddCommand(installCmd)
+
+	// Here you will define your flags and configuration settings.
+
+	// Cobra supports Persistent Flags which will work for this command
+	// and all subcommands, e.g.:
+	// installCmd.PersistentFlags().String("foo", "", "A help for foo")
+
+	// Cobra supports local flags which will only run when this command
+	// is called directly, e.g.:
+	// installCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}

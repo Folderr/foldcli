@@ -16,33 +16,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-func readConfig() {
-	viper.SetConfigType("yaml")
-	dir, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
-	}
-	viper.AddConfigPath(dir + "/.folderr/cli")
-	err = viper.ReadInConfig()
-	if err != nil && !strings.Contains(err.Error(), "Not Found") {
-		panic(err)
-	} else if err != nil {
-		err = os.MkdirAll(dir+"/.folderr/cli", 0660)
-		if err != nil {
-			panic(err)
-		}
-
-		_, err = os.Create(dir + "/.folderr/cli/config.yaml")
-		if err != nil {
-			panic(err)
-		}
-		err = viper.WriteConfig()
-		if err != nil {
-			panic(err)
-		}
-	}
-}
-
 var mkdir, override bool
 
 func init() {
@@ -50,7 +23,6 @@ func init() {
 	initCmd.Flags().BoolVarP(&override, "override", "o", false, "Override previous settings")
 	initCmd.Flags().StringVarP(&authFlag, "authorization", "a", "", "Authorization token for private repositories")
 	rootCmd.AddCommand(initCmd)
-	readConfig()
 }
 
 func checkifExists(input string) bool {
@@ -82,8 +54,7 @@ func isValidPath(input string) bool {
 func manipulateDir(input string) string {
 	result := input
 	if runtime.GOOS == "windows" && !strings.Contains(input, "\\\\") { // Because windows. Fuck you Windows.
-		result = strings.ReplaceAll(input, "\\", "\\\\")
-		result = strings.ReplaceAll(result, "/", "\\\\")
+		result = strings.ReplaceAll(result, "/", "\\")
 	}
 	return result
 }
@@ -91,15 +62,18 @@ func manipulateDir(input string) string {
 func dirChecks(input string) bool {
 	isValid := isValidPath(input)
 	if !isValid {
-		fmt.Println("That is NOT a valid directory!")
+		println("That is NOT a valid directory!")
 		os.Exit(1)
 	}
 	return checkifExists(input)
 }
 
 // Interactive setup
+// CANNOT TEST
+// COBRA DOES NOT SUPPLY io.ReadCloser or io.WriteCloser
+// COBRA SUPPLIES io.Reader and io.Writer
 func interactiveDirectory() (bool, error) {
-	if viper.IsSet("directory") && !override {
+	if config.directory != "" && !override {
 		return true, nil
 	}
 	prompt := promptui.Prompt{
@@ -108,7 +82,7 @@ func interactiveDirectory() (bool, error) {
 	}
 	result, err := prompt.Run()
 	if err != nil && err.Error() != "" {
-		fmt.Println("Error: ", err)
+		println("Error: ", err)
 		return false, err
 	}
 	if len(result) > 0 && err == nil {
@@ -128,20 +102,23 @@ func interactiveDirectory() (bool, error) {
 			}
 			shouldMake, err := mkdirPrompt.Run()
 			if err != nil && err.Error() != "" {
-				fmt.Println("Error: ", err)
+				println("Error: ", err)
 				return false, err
 			}
 			if len(shouldMake) > 0 && err == nil {
-				fmt.Println("Creating Directory \"" + result + "\"...")
+				println("Creating Directory \"" + result + "\"...")
 				err := os.MkdirAll(result, 0660)
 				if err != nil {
-					fmt.Println("Failed to create directory", result)
+					println("Failed to create directory", result)
 					return false, err
 				}
 			}
 		}
-		fmt.Println("Setting directory to be...", result)
+		println("Setting directory to be...", result)
 		viper.Set("directory", result)
+	}
+	if dry {
+		return true, nil
 	}
 	err = viper.WriteConfig()
 	if err != nil {
@@ -150,8 +127,11 @@ func interactiveDirectory() (bool, error) {
 	return true, nil
 }
 
+// CANNOT TEST
+// COBRA DOES NOT SUPPLY io.ReadCloser or io.WriteCloser
+// COBRA SUPPLIES io.Reader and io.Writer
 func interactiveRepository() (bool, error) {
-	if viper.IsSet("repository") && !override {
+	if config.repository != "" && !override {
 		return true, nil
 	}
 	prompt := promptui.Prompt{
@@ -176,7 +156,7 @@ func interactiveRepository() (bool, error) {
 		return false, err
 	}
 	if parsed.Scheme != "https" {
-		fmt.Println("Cannot work with non-HTTPS urls. Limitation issue.")
+		println("Cannot work with non-HTTPS urls. Limitation issue.")
 		os.Exit(1)
 	}
 	shouldFail := false
@@ -209,10 +189,10 @@ func interactiveRepository() (bool, error) {
 		}
 	}
 	if shouldFail {
-		fmt.Println("Goodbye!")
+		println("Goodbye!")
 		os.Exit(0)
 	}
-	fmt.Println("Cloning the repository to see if its valid...")
+	println("Cloning the repository to see if its valid...")
 	repo, err := git.Clone(memory.NewStorage(), nil, gitOptions)
 	if err != nil {
 		return false, err
@@ -220,7 +200,10 @@ func interactiveRepository() (bool, error) {
 	if repo == nil {
 		return false, nil
 	}
-	fmt.Println("Setting repository to be", inputUrl)
+	println("Setting repository to be", inputUrl)
+	if dry {
+		return true, nil
+	}
 	viper.Set("repository", inputUrl)
 	err = viper.WriteConfig()
 	if err != nil {
@@ -230,8 +213,9 @@ func interactiveRepository() (bool, error) {
 }
 
 // Functions based on args instead of interactive
+// CAN TEST
 func dirStatic(args []string) (bool, error) {
-	if viper.IsSet("directory") && !override {
+	if config.directory != "" && !override {
 		return true, nil
 	}
 	if len(args) < 1 {
@@ -240,18 +224,21 @@ func dirStatic(args []string) (bool, error) {
 	dir := manipulateDir(args[0])
 	exists := dirChecks(dir)
 	if !exists && !mkdir {
-		fmt.Println("Cannot use a directory that does not exist")
+		println("Cannot use a directory that does not exist")
 		return false, nil
 	} else if !exists && mkdir {
-		fmt.Println("Creating Directory \"" + dir + "\"...")
+		println("Creating Directory \"" + dir + "\"...")
 		err := os.MkdirAll(dir, 0760)
 		if err != nil {
-			fmt.Println("Failed to create directory", dir)
+			println("Failed to create directory", dir)
 			return false, err
 		}
 	}
-	fmt.Println("Setting directory to be", dir)
+	println("Setting directory to be", dir)
 	viper.Set("directory", dir)
+	if dry {
+		return true, nil
+	}
 	err := viper.WriteConfig()
 	if err != nil {
 		return false, err
@@ -260,7 +247,7 @@ func dirStatic(args []string) (bool, error) {
 }
 
 func repositoryStatic(args []string) (bool, error) {
-	if viper.IsSet("repository") && !override {
+	if config.repository != "" && !override {
 		return true, nil
 	}
 	if len(args) < 2 {
@@ -268,15 +255,15 @@ func repositoryStatic(args []string) (bool, error) {
 	}
 	url, err := url.Parse(args[1])
 	if err != nil {
-		fmt.Println('f')
+		println('f')
 		return false, err
 	}
 	if url.Host == "" || url.Scheme == "" {
-		fmt.Println("URL is invalid!")
+		println("URL is invalid!")
 		os.Exit(1)
 	}
 	if url.Scheme != "https" {
-		fmt.Println("Can only work with HTTPS!")
+		println("Can only work with HTTPS!")
 		os.Exit(1)
 	}
 	gitOptions := &git.CloneOptions{
@@ -288,7 +275,7 @@ func repositoryStatic(args []string) (bool, error) {
 			Password: authFlag,
 		}
 	}
-	fmt.Println("Cloning the repository to see if its valid...")
+	println("Cloning the repository to see if its valid...")
 	repo, err := git.Clone(memory.NewStorage(), nil, gitOptions)
 	if err != nil {
 		return false, err
@@ -296,11 +283,14 @@ func repositoryStatic(args []string) (bool, error) {
 	if repo == nil {
 		return false, nil
 	}
-	fmt.Println("Setting repository to be", args[1])
 	viper.Set("repository", args[1])
+	println("Setting repository to be", args[1])
+	if dry {
+		return true, nil
+	}
 	err = viper.WriteConfig()
 	if err != nil {
-		fmt.Println(err)
+		println(err)
 		return false, nil
 	}
 	return true, nil
@@ -343,10 +333,13 @@ Interactivity happens when you do not provide the listed arguments (excluding fl
 		}
 
 		if len(fails) > 0 {
-			fmt.Println("One or more aspects of setup failed.")
-			fmt.Println("Failures:", strings.Join(fails, ", "))
+			println("One or more aspects of setup failed.")
+			println("Failures:", strings.Join(fails, ", "))
 		} else {
-			fmt.Println("It looks like your Folderr CLI is initialized!")
+			println("It looks like your Folderr CLI is initialized!")
+		}
+		if dry {
+			println("No changes were made.")
 		}
 	},
 }
