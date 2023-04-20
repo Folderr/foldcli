@@ -20,11 +20,11 @@ var rootCmd = &cobra.Command{
 	Use:   "folderr",
 	Short: "A CLI to manage Folderr installations",
 	Long: `A CLI to setup and manage your Folderr instance For example:
-folderr init /home/folderr/folderr
+folderr init /home/folderr/folderr https://github.com/Folderr/<repo>
 folderr init
 folderr install
-folderr setup`,
-	Version: "Alpha 0.0.1",
+folderr setup (not added)`,
+	Version: "Alpha 0.0.2",
 	// Cleanup for dry-run commands
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		if dry && strings.Contains(config.directory, os.TempDir()) {

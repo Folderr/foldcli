@@ -15,6 +15,6 @@ var version = &cobra.Command{
 	Short: "Print the version of Folderr Manage",
 	Long:  "Here are the versions",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Folderr Manager version: Alpha 0.0.1")
+		fmt.Println("Folderr Manager version:", rootCmd.Version)
 	},
 }
