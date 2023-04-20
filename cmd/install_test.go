@@ -15,8 +15,6 @@ func TestInstall(t *testing.T) {
 	}
 	// init command usage: init [directory] [repository]
 	// we'll use github.com/Folderr/Docs here as its a public repository
-
-	ReadConfig()
 	rootCmd.SetArgs([]string{"install", "--dry"})
 	rootCmd.SetOut(actual)
 	_, err = cmd.ExecuteC()

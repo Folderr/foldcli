@@ -304,8 +304,11 @@ If a repository is provided non-interactively, the authorization flag MUST be su
 Interactivity happens when you do not provide the listed arguments (excluding flags)`,
 	ValidArgs: []string{"directory", "repository"},
 	Run: func(cmd *cobra.Command, args []string) {
+		_, err := ReadConfig()
+		if err != nil {
+			panic(err)
+		}
 		var fails []string
-		var err error
 		noFail := true
 		if len(args) == 0 {
 			noFail, err = interactiveDirectory()

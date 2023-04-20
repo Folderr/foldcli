@@ -73,6 +73,10 @@ var installCmd = &cobra.Command{
 	Short: "Install Folderr into the setup directory",
 	Long:  `Checks for Folderrs dependencies and installs Folderr`,
 	Run: func(cmd *cobra.Command, args []string) {
+		_, err := ReadConfig()
+		if err != nil {
+			panic(err)
+		}
 		if !config.canInstall {
 			println("Folderr CLI is not initialized. Run \"folderr init\" to fix this issue.")
 			return

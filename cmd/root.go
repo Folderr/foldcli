@@ -60,6 +60,9 @@ var config Config = Config{}
 func ReadConfig() (bool, error) {
 	viper.SetConfigType("yaml")
 	dir, err := os.UserHomeDir()
+	if dry {
+		fmt.Println("Using dry-run mode")
+	}
 	if err != nil && dry {
 		println("Error accessing user directory:", err)
 		println("This is a warning as you are in dry-run mode")
@@ -133,10 +136,6 @@ func init() {
 	// rootCmd.PersistentFlags().BoolVar(&dry, "dry", false, "Runs the command but does not change ANYTHING")
 	rootCmd.PersistentFlags().BoolVar(&dry, "dry", false, "Runs the command but does not change anything")
 	rootCmd.ParseFlags(os.Args)
-	_, err := ReadConfig()
-	if err != nil {
-		panic(err)
-	}
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
