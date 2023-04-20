@@ -1,4 +1,4 @@
-module github.com/Folderr/Manager
+module github.com/Folderr/folderr-cli
 
 go 1.20
 
