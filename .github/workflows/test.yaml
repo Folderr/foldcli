@@ -23,8 +23,6 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - name: Install dependencies
         run: go get .
-      - name: Test with Go
-        run: go test ./cmd
       - name: Test with Go & Output
         run: go test ./cmd -json > TestResults-${{ matrix.go-version }}.json
       - name: Upload Go test results
