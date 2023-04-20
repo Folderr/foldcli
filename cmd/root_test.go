@@ -10,7 +10,7 @@ import (
 func TestRoot(t *testing.T) {
 	actual := &bytes.Buffer{}
 	rootCmd.SetOut(actual)
-	rootCmd.SetArgs([]string{})
+	rootCmd.SetArgs([]string{"--dry-run"})
 	err := rootCmd.Execute()
 	if err != nil {
 		t.Fatal("Root Command failed with error", err)
