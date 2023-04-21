@@ -69,7 +69,9 @@ func ReadConfig() (bool, error) {
 	} else if err != nil {
 		return false, err
 	}
+	// config stuffs
 	viper.AddConfigPath(dir + "/.folderr/cli")
+	viper.AutomaticEnv()
 	err = viper.ReadInConfig()
 	// If in dry-run mode we don't care if there is a config or not.
 	// The config will NEVER be modified.
@@ -95,6 +97,9 @@ func ReadConfig() (bool, error) {
 			return false, err
 		}
 		return false, nil
+	}
+	if viper.IsSet("token") {
+		authFlag = viper.GetString("token")
 	}
 	if viper.IsSet("repository") {
 		config.repository = viper.GetString("repository")
