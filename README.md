@@ -55,8 +55,9 @@ folderr-cli init /home/folderr/folderr https://github.com/Folderr/Folderr
 
 ## Contributing
 
-Please use `stacticcheck` for linting Go, and use `go vet` before comitting.
+Please use `staticcheck` for linting Go, and use `go vet` before comitting.
 These are ran on pull request and push!
+- Uses staticcheck 2023.1.3 in CI
 
 Dev environment is unchanged from other environments.
 Please also use `go test ./cmd` before committing (this requires NodeJS 14 or later installed, and NPM).
