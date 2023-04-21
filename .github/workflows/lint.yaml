@@ -3,10 +3,12 @@ on: [push, pull_request]
 
 jobs:
   ci:
+    name: "Lint"
+    runs-on: ubuntu-latest
+
     strategy:
       matrix:
         go: ['1.20.x']
-    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3

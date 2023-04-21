@@ -5,11 +5,13 @@ on: [push, pull_request]
 jobs:
   ci:
 
-    runs-on: ubuntu-latest
+    name: "Test"
     strategy:
       matrix:
         go-version: [ '1.20.x' ]
         node-version: [16.x]
+        os: ["windows-latest", "ubuntu-latest"]
+    runs-on: ${{matrix.os}}
 
     steps:
       - uses: actions/checkout@v3
