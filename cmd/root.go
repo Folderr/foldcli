@@ -65,6 +65,14 @@ var config Config = Config{}
 
 var dir string
 
+func getToken() string {
+	token := os.Getenv("token")
+	if token == "" {
+		token = os.Getenv("TOKEN")
+	}
+	return token
+}
+
 func ReadConfig() (bool, error) {
 	viper.SetConfigType("yaml")
 	dir, err := os.UserHomeDir()
@@ -87,7 +95,6 @@ func ReadConfig() (bool, error) {
 		}
 	}
 	viper.AddConfigPath(dir)
-	viper.AutomaticEnv()
 	err = viper.ReadInConfig()
 	// If in dry-run mode we don't care if there is a config or not.
 	// The config will NEVER be modified.
@@ -130,22 +137,21 @@ func ReadConfig() (bool, error) {
 		}
 		// We DO NOT care about any config in dry-run mode.
 		config.directory = dir
-		if os.Getenv("token") != "" {
+		if getToken() != "" {
 			config.repository = "https://github.com/Folderr/Folderr"
 		} else {
 			config.repository = "https://github.com/Folderr/Docs"
 		}
 		viper.Set("repository", config.repository)
 		viper.Set("directory", config.directory)
-		viper.AutomaticEnv()
 		err = viper.SafeWriteConfig()
 		if err != nil {
 			fmt.Println("Tried working with temp directories. No luck.")
 			panic(err)
 		}
 	}
-	if viper.IsSet("token") {
-		authFlag = viper.GetString("token")
+	if getToken() != "" {
+		authFlag = getToken()
 	}
 	if viper.IsSet("repository") {
 		config.repository = viper.GetString("repository")

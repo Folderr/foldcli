@@ -11,7 +11,7 @@ import (
 func TestInit(t *testing.T) {
 	os.Setenv("test", "true")
 	repo := "https://github.com/Folderr/Docs"
-	if os.Getenv("token") != "" {
+	if getToken() != "" {
 		repo = "https://github.com/Folderr/Folderr"
 	}
 	actual := &bytes.Buffer{}
