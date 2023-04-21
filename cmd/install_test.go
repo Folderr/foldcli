@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"bytes"
+	"os"
 	"strings"
 	"testing"
 )
 
 // Never run parallel. It fucks up Viper
 func TestInstall(t *testing.T) {
+	os.Setenv("test", "true")
 	actual := &bytes.Buffer{}
 	cmd, args, err := rootCmd.Find([]string{"install", "--dry"})
 	if err != nil {

@@ -4,6 +4,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
@@ -264,9 +265,14 @@ var installCmd = &cobra.Command{
 			panic(err)
 		}
 
-		args = []string{"install"}
+		args = []string{"install", "--omit=dev"}
 		if dry {
+			// After Folderr:frontend is merged with folderr:dev we can remove
+			// "--ignore-scripts"
 			args = append(args, "--dry-run")
+		}
+		if config.repository == "https://github.com/Folderr/Folderr" && os.Getenv("test") != "true" {
+			args = append(args, "--ignore scripts")
 		}
 		npmCmd, err := findCommand("npm", args)
 		if err != nil {
@@ -275,8 +281,8 @@ var installCmd = &cobra.Command{
 		output, err := npmCmd.CombinedOutput()
 		if err != nil {
 			if len(output) > 0 {
-				println("NPM install failed, here's the output")
-				println(string(output))
+				fmt.Println("NPM install failed, here's the output")
+				fmt.Println(string(output))
 			}
 			panic(err)
 		}

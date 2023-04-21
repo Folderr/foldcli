@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"bytes"
+	"os"
 	"strings"
 	"testing"
 )
 
 // Never run parallel. It fucks up viper.
 func TestRoot(t *testing.T) {
+	os.Setenv("test", "true")
 	actual := &bytes.Buffer{}
 	rootCmd.SetOut(actual)
 	rootCmd.SetArgs([]string{"--dry"})

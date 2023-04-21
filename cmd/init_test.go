@@ -9,13 +9,26 @@ import (
 
 // Never run parallel. It fucks up Viper
 func TestInit(t *testing.T) {
+	os.Setenv("test", "true")
+	repo := "https://github.com/Folderr/Docs"
+	if os.Getenv("token") != "" {
+		repo = "https://github.com/Folderr/Folderr"
+	}
 	actual := &bytes.Buffer{}
-	args := []string{os.TempDir(), "https://github.com/Folderr/Docs", "--dry", "-o"}
+	lDir := dir
+	if dir == "" {
+		llDir, err := os.MkdirTemp(os.TempDir(), "Folderr-")
+		if err != nil {
+			t.Fatal("Failed because couldn't make temp directory")
+		}
+		lDir = llDir
+	}
+	args := []string{lDir, repo, "--dry", "-o"}
 	cmd, args, err := rootCmd.Find(append([]string{"init"}, args...))
+	rootCmd.SetOut(actual)
 	if err != nil {
 		t.Fatal("Failed due to error", err)
 	}
-	rootCmd.SetOut(actual)
 	// init command usage: init [directory] [repository]
 	// we'll use github.com/Folderr/Docs here as its a public repository
 
@@ -27,6 +40,6 @@ func TestInit(t *testing.T) {
 	}
 	suffix := []string{"It looks like your Folderr CLI is initialized!", "No changes were made."}
 	if !strings.Contains(actual.String(), suffix[0]) || !strings.Contains(actual.String(), suffix[1]) {
-		t.Errorf(`Unexpected output from "folderr init"`)
+		t.Errorf(`Unexpected output from "folderr init %v %v %v %v"`, args[0], args[1], args[2], args[3])
 	}
 }

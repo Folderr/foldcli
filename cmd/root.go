@@ -34,6 +34,12 @@ folderr setup (not added)`,
 				panic(err)
 			}
 		}
+		if dry && strings.Contains(dir, os.TempDir()) {
+			err := os.RemoveAll(dir)
+			if err != nil {
+				panic(err)
+			}
+		}
 	},
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
@@ -57,6 +63,8 @@ type Config struct {
 
 var config Config = Config{}
 
+var dir string
+
 func ReadConfig() (bool, error) {
 	viper.SetConfigType("yaml")
 	dir, err := os.UserHomeDir()
@@ -69,8 +77,16 @@ func ReadConfig() (bool, error) {
 	} else if err != nil {
 		return false, err
 	}
+	dir = dir + "/.folderr/cli"
 	// config stuffs
-	viper.AddConfigPath(dir + "/.folderr/cli")
+	if dry && os.Getenv("test") == "true" {
+		dir, err = os.MkdirTemp(os.TempDir(), ".folderr-cli-")
+		if err != nil {
+			println("Failed to make temp dir for dry-run")
+			panic(err)
+		}
+	}
+	viper.AddConfigPath(dir)
 	viper.AutomaticEnv()
 	err = viper.ReadInConfig()
 	// If in dry-run mode we don't care if there is a config or not.
@@ -98,6 +114,36 @@ func ReadConfig() (bool, error) {
 		}
 		return false, nil
 	}
+	testEnv := os.Getenv("test")
+	if (err != nil && dry) || testEnv == "true" {
+		dir, err = os.MkdirTemp(os.TempDir(), ".folderr-cli-")
+		if err != nil {
+			println("Failed to make temp dir for dry-run")
+			panic(err)
+		}
+		viper.Reset()
+		viper.SetConfigType("yaml")
+		viper.AddConfigPath(dir)
+		dir, err = os.MkdirTemp(os.TempDir(), "Folderr-")
+		if err != nil {
+			panic(err)
+		}
+		// We DO NOT care about any config in dry-run mode.
+		config.directory = dir
+		if os.Getenv("token") != "" {
+			config.repository = "https://github.com/Folderr/Folderr"
+		} else {
+			config.repository = "https://github.com/Folderr/Docs"
+		}
+		viper.Set("repository", config.repository)
+		viper.Set("directory", config.directory)
+		viper.AutomaticEnv()
+		err = viper.SafeWriteConfig()
+		if err != nil {
+			fmt.Println("Tried working with temp directories. No luck.")
+			panic(err)
+		}
+	}
 	if viper.IsSet("token") {
 		authFlag = viper.GetString("token")
 	}
@@ -109,22 +155,6 @@ func ReadConfig() (bool, error) {
 	}
 	if config.directory != "" && config.repository != "" {
 		config.canInstall = true
-	}
-	if dry {
-		println("Setting custom stuff due to dry-run mode")
-		viper.Reset()
-		dir, err := os.MkdirTemp(os.TempDir(), ".folderr-cli-")
-		if err != nil {
-			panic(err)
-		}
-		viper.AddConfigPath(dir)
-		dir, err = os.MkdirTemp(os.TempDir(), "Folderr-")
-		if err != nil {
-			panic(err)
-		}
-		// We DO NOT care about any config in dry-run mode.
-		config.directory = dir
-		config.repository = "https://github.com/Folderr/Docs"
 	}
 	return true, nil
 }
