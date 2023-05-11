@@ -73,8 +73,7 @@ func getToken() string {
 	return token
 }
 
-func ReadConfig() (bool, error) {
-	viper.SetConfigType("yaml")
+func getConfigDir() (string, error) {
 	dir, err := os.UserHomeDir()
 	if dry {
 		fmt.Println("Using dry-run mode")
@@ -83,9 +82,18 @@ func ReadConfig() (bool, error) {
 		println("Error accessing user directory:", err)
 		println("This is a warning as you are in dry-run mode")
 	} else if err != nil {
-		return false, err
+		return "", err
 	}
 	dir = dir + "/.folderr/cli"
+	return dir, nil
+}
+
+func ReadConfig() (bool, error) {
+	viper.SetConfigType("yaml")
+	dir, err := getConfigDir()
+	if err != nil {
+		return false, err
+	}
 	// config stuffs
 	if dry && os.Getenv("test") == "true" {
 		dir, err = os.MkdirTemp(os.TempDir(), ".folderr-cli-")
