@@ -10,7 +10,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -93,7 +92,7 @@ path is where the private key gets saved. Default: $HOME/.folderr/cli/`,
 		privatePem := pem.EncodeToMemory(&privBlock)
 
 		// write private key
-		err = ioutil.WriteFile(save_dir+"privateJWT.pem", privatePem, 0700)
+		err = os.WriteFile(save_dir+"privateJWT.pem", privatePem, 0700)
 		if err != nil {
 			panic(err)
 		}
@@ -112,7 +111,7 @@ path is where the private key gets saved. Default: $HOME/.folderr/cli/`,
 
 		publicPem := pem.EncodeToMemory(&pubBlock)
 		// write public key in case something goes wrong
-		err = ioutil.WriteFile(save_dir+"publicJWT.pem", publicPem, 0755)
+		err = os.WriteFile(save_dir+"publicJWT.pem", publicPem, 0755)
 		if err != nil {
 			panic(err)
 		}
