@@ -15,15 +15,11 @@ func TestInit(t *testing.T) {
 		repo = "https://github.com/Folderr/Folderr"
 	}
 	actual := &bytes.Buffer{}
-	lDir := ConfigDir
+	dir := ConfigDir
 	if ConfigDir == "" {
-		llDir, err := os.MkdirTemp(os.TempDir(), "Folderr-")
-		if err != nil {
-			t.Fatal("Failed because couldn't make temp directory")
-		}
-		lDir = llDir
+		dir = t.TempDir()
 	}
-	args := []string{lDir, repo, "--dry", "-o"}
+	args := []string{dir, repo, "--dry", "-o"}
 	cmd, args, err := rootCmd.Find(append([]string{"init"}, args...))
 	rootCmd.SetOut(actual)
 	if err != nil {
