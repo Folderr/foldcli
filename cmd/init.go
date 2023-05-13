@@ -221,21 +221,21 @@ func dirStatic(args []string) (bool, error) {
 	if len(args) < 1 {
 		return false, nil
 	}
-	dir := manipulateDir(args[0])
-	exists := dirChecks(dir)
+	ldir := manipulateDir(args[0])
+	exists := dirChecks(ldir)
 	if !exists && !mkdir {
 		println("Cannot use a directory that does not exist")
 		return false, nil
 	} else if !exists && mkdir {
-		println("Creating Directory \"" + dir + "\"...")
-		err := os.MkdirAll(dir, 0760)
+		println("Creating Directory \"" + ldir + "\"...")
+		err := os.MkdirAll(ldir, 0760)
 		if err != nil {
-			println("Failed to create directory", dir)
+			println("Failed to create directory", ldir)
 			return false, err
 		}
 	}
-	println("Setting directory to be", dir)
-	viper.Set("directory", dir)
+	println("Setting directory to be", ldir)
+	viper.Set("directory", ldir)
 	if dry {
 		return true, nil
 	}

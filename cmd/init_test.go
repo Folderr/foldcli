@@ -15,8 +15,8 @@ func TestInit(t *testing.T) {
 		repo = "https://github.com/Folderr/Folderr"
 	}
 	actual := &bytes.Buffer{}
-	lDir := dir
-	if dir == "" {
+	lDir := ConfigDir
+	if ConfigDir == "" {
 		llDir, err := os.MkdirTemp(os.TempDir(), "Folderr-")
 		if err != nil {
 			t.Fatal("Failed because couldn't make temp directory")
