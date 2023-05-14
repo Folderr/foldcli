@@ -19,10 +19,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Setup MongoDB
-        uses: supercharge/mongodb-github-action@1.9.0
-        with:
-          mongodb-version: 6.0
       - name: Install Node deps
         run: npm i -g husky typescript
       - name: Setup Go
@@ -35,7 +31,6 @@ jobs:
         run: go test ./cmd -json > TestResults-${{ matrix.go-version }}-${{ matrix.os }}.json
         env:
           test: true
-          MONGO_URI: mongodb://127.0.0.1/
       - name: Upload Go test results
         uses: actions/upload-artifact@v3
         with:
