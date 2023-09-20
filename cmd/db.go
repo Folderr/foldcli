@@ -25,16 +25,16 @@ var FolderrDbInsertedId *mongo.InsertOneResult
 
 // folderrDBCmd represents the folderr command
 var folderrDBCmd = &cobra.Command{
-	Use:   "folderr-db [db_name] (path_for_private_key)",
-	Short: "Set up Folderr",
-	Long: `Set up Folderr's database structures and keys
+	Use:   "db [db_name] (path_for_private_key)",
+	Short: "Set up Folderr DB & Keys",
+	Long: `Set up Folderr's database structures and security (encryption) keys
 Returns the private key in a file AND as output
 db_name is the name of the database you'll use for your Folderr install
 path is where the keys get saved. Default: $HOME/.folderr/cli/
 
 NOTES:
-Does not have dry-run mode. Cannot accurately test without a dry run mode.
-Test with test env variable. Do not use production database name when testing.`,
+Does not have dry-run mode. Cannot accurately test with a dry run mode.
+Test with "test" env variable. Do not use production database name/url when testing.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		_, err := ReadConfig()
 		if err != nil {
