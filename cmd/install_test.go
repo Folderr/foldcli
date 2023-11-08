@@ -33,7 +33,7 @@ func TestInstall(t *testing.T) {
 	for _, i := range suffix {
 		if !strings.Contains(actual.String(), i) {
 			t.Error(
-				`Command "folderr install" did not produce expected out`,
+				`Command "folderr-cli install" did not produce expected out`,
 				`\nExpected `+i+` and did not get that.`,
 			)
 		}

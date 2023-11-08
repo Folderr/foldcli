@@ -41,7 +41,7 @@ func findCommandV(command string, hasPrefix bool, prefix string) (string, error)
 		out, _ = strings.CutPrefix(out, prefix)
 	} else {
 		printf("Got unexpected output from running \"%v -v\". Contact developers.\n", command)
-		println("Contact developers at https://github.com/Folderr/Manager/issues")
+		println("Contact developers at https://github.com/Folderr/Folderr-CLI/issues")
 		println("Output:", out)
 		return "", nil
 	}

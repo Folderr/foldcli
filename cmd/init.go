@@ -298,8 +298,8 @@ func repositoryStatic(args []string) (bool, error) {
 
 var initCmd = &cobra.Command{
 	Use:   "init [directory] [repository]",
-	Short: "Initalize your Folderr Manager config",
-	Long: `Initalize your Folderr Manager config interactively or non-interactively.
+	Short: "Initalize your Folderr CLI config",
+	Long: `Initalize your Folderr CLI config interactively or non-interactively.
 If a repository is provided non-interactively, the authorization flag MUST be supplied if it is private or else it will fail.
 Interactivity happens when you do not provide the listed arguments (excluding flags)`,
 	ValidArgs: []string{"directory", "repository"},

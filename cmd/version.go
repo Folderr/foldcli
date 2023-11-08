@@ -12,9 +12,9 @@ func init() {
 
 var version = &cobra.Command{
 	Use:   "version",
-	Short: "Print the version of Folderr Manage",
+	Short: "Print the version of Folderr CLI",
 	Long:  "Here are the versions",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Folderr Manager version:", rootCmd.Version)
+		fmt.Println("Folderr CLI version:", rootCmd.Version)
 	},
 }
