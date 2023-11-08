@@ -32,10 +32,10 @@ func TestInit(t *testing.T) {
 	_, err = cmd.ExecuteC()
 	t.Log(actual.String())
 	if err != nil {
-		t.Errorf(`Command "folderr init %v %v %v %v" failed because of error, %v`, args[0], args[1], args[2], args[3], err)
+		t.Errorf(`Command "`+rootCmdName+` init %v %v %v %v" failed because of error, %v`, args[0], args[1], args[2], args[3], err)
 	}
 	suffix := []string{"It looks like your Folderr CLI is initialized!", "No changes were made."}
 	if !strings.Contains(actual.String(), suffix[0]) || !strings.Contains(actual.String(), suffix[1]) {
-		t.Errorf(`Unexpected output from "folderr init %v %v %v %v"`, args[0], args[1], args[2], args[3])
+		t.Errorf(`Unexpected output from "`+rootCmdName+` init %v %v %v %v"`, args[0], args[1], args[2], args[3])
 	}
 }

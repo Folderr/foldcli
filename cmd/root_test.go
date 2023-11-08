@@ -18,7 +18,7 @@ func TestRoot(t *testing.T) {
 		t.Fatal("Root Command failed with error", err)
 	}
 	prefix := strings.HasPrefix(actual.String(), rootCmd.Long)
-	suffix := strings.Contains(actual.String(), `Use "folderr [command] --help" for more information about a command.`)
+	suffix := strings.Contains(actual.String(), `Use "`+rootCmdName+` [command] --help" for more information about a command.`)
 
 	if !prefix || !suffix {
 		t.Log(actual.String())

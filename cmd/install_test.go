@@ -22,7 +22,7 @@ func TestInstall(t *testing.T) {
 	_, err = cmd.ExecuteC()
 	t.Log(actual.String())
 	if err != nil {
-		t.Errorf(`Command "folderr install %v" failed because of error, %v`, args[0], err)
+		t.Errorf(`Command "`+rootCmdName+`install %v" failed because of error, %v`, args[0], err)
 	}
 	suffix := []string{
 		"Clone successful",
@@ -33,7 +33,7 @@ func TestInstall(t *testing.T) {
 	for _, i := range suffix {
 		if !strings.Contains(actual.String(), i) {
 			t.Error(
-				`Command "folderr-cli install" did not produce expected out`,
+				`Command "`+rootCmdName+` install" did not produce expected out`,
 				`\nExpected `+i+` and did not get that.`,
 			)
 		}

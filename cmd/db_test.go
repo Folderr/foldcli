@@ -21,13 +21,13 @@ func TestSetupFolderrDb(t *testing.T) {
 	_, err := rootCmd.ExecuteC()
 	t.Log(actual.String())
 	if err != nil {
-		t.Fatalf("Command folderr-cli setup folderr-db %v failed because of error, %v", args[0], err)
+		t.Fatalf("Command "+rootCmdName+" setup folderr-db %v failed because of error, %v", args[0], err)
 	}
 	if strings.Contains(actual.String(), "Folderr appears to be setup") {
 		t.Fatal("Using pre-setup version of Folderr. Test invalid.")
 	}
 	if !strings.Contains(actual.String(), "END RSA PRIVATE KEY") {
-		t.Logf("Command folderr-cli setup folderr-db %v failed because unexpected output", args[0])
+		t.Logf("Command "+rootCmdName+" setup folderr-db %v failed because unexpected output", args[0])
 		t.FailNow()
 	}
 }

@@ -79,7 +79,7 @@ var installCmd = &cobra.Command{
 			panic(err)
 		}
 		if !config.canInstall {
-			println("Folderr CLI is not initialized. Run \"folderr init\" to fix this issue.")
+			println("Folderr CLI is not initialized. Run \"" + rootCmdName + " init\" to fix this issue.")
 			return
 		}
 		println("Checking if NodeJS is installed")
