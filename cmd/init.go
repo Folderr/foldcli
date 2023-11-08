@@ -107,7 +107,7 @@ func interactiveDirectory() (bool, error) {
 			}
 			if len(shouldMake) > 0 && err == nil {
 				println("Creating Directory \"" + result + "\"...")
-				err := os.MkdirAll(result, 0660)
+				err := os.MkdirAll(result, 0770)
 				if err != nil {
 					println("Failed to create directory", result)
 					return false, err

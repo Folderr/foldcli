@@ -114,12 +114,12 @@ func ReadConfig() (bool, error) {
 	} else if err != nil && !strings.Contains(err.Error(), "Not Found") {
 		return false, err
 	} else if err != nil {
-		err = os.MkdirAll(dir+"/.folderr/cli", 0660)
+		err = os.MkdirAll(dir, 0770)
 		if err != nil {
 			return false, err
 		}
 
-		_, err = os.Create(dir + "/.folderr/cli/config.yaml")
+		_, err = os.Create(dir + "/config.yaml")
 		if err != nil {
 			return false, err
 		}
