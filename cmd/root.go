@@ -16,6 +16,7 @@ var authFlag string
 var dry bool
 
 var rootCmdName = "folderr-cli"
+var envPrefix = "FOLDCLI_"
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -68,9 +69,9 @@ var config Config = Config{}
 var ConfigDir string
 
 func getToken() string {
-	token := os.Getenv("token")
+	token := os.Getenv(strings.ToLower(envPrefix) + "token")
 	if token == "" {
-		token = os.Getenv("TOKEN")
+		token = os.Getenv(envPrefix + "TOKEN")
 	}
 	return token
 }

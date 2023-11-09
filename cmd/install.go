@@ -4,7 +4,9 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"strconv"
@@ -170,7 +172,14 @@ var installCmd = &cobra.Command{
 
 		println("Cloning repository...")
 		repo, err = cloneFolderr(gitOptions)
-		if err != nil {
+		if errors.Is(err, git.ErrRepositoryNotExists) {
+			println("That repository doesn't exist")
+			os.Exit(1)
+		} else if strings.Contains(err.Error(), "authorization") || strings.Contains(err.Error(), "authentication") {
+			println("Authentication required. Please pass either the authorization flag or set the " + envPrefix + "TOKEN environment variable.\n" +
+				"See \"" + rootCmdName + " install --help\" for more info")
+			os.Exit(1)
+		} else if err != nil {
 			println("An Error Occurred while cloning the repository. Error:", err)
 			panic(err)
 		}
@@ -261,7 +270,9 @@ var installCmd = &cobra.Command{
 			panic(err)
 		}
 		err = os.Chdir(config.directory)
-		if err != nil {
+		if errors.Is(err, fs.ErrPermission) {
+			println("Cannot access directory \"" + config.directory + "\".\nDo I have permission to access that?\nIs that a directory?\nIs it executable (linux only)?")
+		} else if err != nil {
 			panic(err)
 		}
 
@@ -374,6 +385,7 @@ func determineHighestVersionTags(tags storer.ReferenceIter) ([]int, *plumbing.Re
 }
 
 func init() {
+	installCmd.Flags().StringVarP(&authFlag, "authorization", "a", "", "Authorization token for private repositories")
 	rootCmd.AddCommand(installCmd)
 
 	// Here you will define your flags and configuration settings.
