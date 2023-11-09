@@ -3,7 +3,7 @@ The Folderr Management CLI
 
 ## More up-to-date documentation
 
-More up to date documentation can be found https://folderr.net/guide/cli/getting-started
+More up to date documentation can be found https://folderr.net/guides/cli/getting-started
 
 Useful for setting up and updating Folderr.
 
