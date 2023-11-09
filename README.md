@@ -7,7 +7,7 @@ More up to date documentation can be found https://folderr.net/guides/cli/gettin
 
 Useful for setting up and updating Folderr.
 
-foldcli is a application written in `go` and expects `go` version `1.20.2` or later (if building).
+foldcli is a application written in `go` and expects `go` version `1.20` or later (if building).
 
 Commands tested on Linux (Ubuntu):
 
@@ -22,7 +22,7 @@ Not supported yet. Must build instead.
 ## Building source code into a binary
 
 Prerequestities:
-- [go 1.20.2 or later](https://go.dev)
+- [go 1.20 or later](https://go.dev)
 
 install with
 
