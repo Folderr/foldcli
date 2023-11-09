@@ -172,16 +172,18 @@ var installCmd = &cobra.Command{
 
 		println("Cloning repository...")
 		repo, err = cloneFolderr(gitOptions)
-		if errors.Is(err, git.ErrRepositoryNotExists) {
-			println("That repository doesn't exist")
-			os.Exit(1)
-		} else if strings.Contains(err.Error(), "authorization") || strings.Contains(err.Error(), "authentication") {
-			println("Authentication required. Please pass either the authorization flag or set the " + envPrefix + "TOKEN environment variable.\n" +
-				"See \"" + rootCmdName + " install --help\" for more info")
-			os.Exit(1)
-		} else if err != nil {
-			println("An Error Occurred while cloning the repository. Error:", err)
-			panic(err)
+		if err != nil {
+			if errors.Is(err, git.ErrRepositoryNotExists) {
+				println("That repository doesn't exist")
+				os.Exit(1)
+			} else if strings.Contains(err.Error(), "authorization") || strings.Contains(err.Error(), "authentication") {
+				println("Authentication required. Please pass either the authorization flag or set the " + envPrefix + "TOKEN environment variable.\n" +
+					"See \"" + rootCmdName + " install --help\" for more info")
+				os.Exit(1)
+			} else {
+				println("An Error Occurred while cloning the repository. Error:", err)
+				panic(err)
+			}
 		}
 		if repo == nil {
 			println("Cannot find the repository for some reason (Not Found).")
