@@ -1,15 +1,19 @@
-# folderr-cli
+# foldcli
 The Folderr Management CLI
+
+## More up-to-date documentation
+
+More up to date documentation can be found https://folderr.net/guide/cli/getting-started
 
 Useful for setting up and updating Folderr.
 
-folderr-cli is a application written in `go` and expects `go` version `1.20.2` or later (if building).
+foldcli is a application written in `go` and expects `go` version `1.20.2` or later (if building).
 
 Commands tested on Linux (Ubuntu):
 
-- `folderr-cli`
-- `folderr-cli init`
-- `folderr-cli install`
+- `foldcli`
+- `foldcli init`
+- `foldcli install`
 
 ## Installation
 
@@ -23,7 +27,7 @@ Prerequestities:
 install with
 
 ```sh
-git clone https://github.com/Folderr/folderr-cli
+git clone https://github.com/Folderr/foldcli
 ```
 
 Build with
@@ -44,13 +48,13 @@ $PATH
 
 ## Usage
 
-On first run use `folderr-cli init` to initialize the cli
+On first run use `foldcli init` to initialize the cli
 
 This can be done interactively or non-interactively. This is the only command that has interactivity currently
 
 Non-interactive example:
 ```sh
-folderr-cli init /home/folderr/folderr https://github.com/Folderr/Folderr
+foldcli init /home/folderr/folderr https://github.com/Folderr/Folderr
 ```
 
 ## Contributing

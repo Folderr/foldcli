@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
+Copyright © 2023 Folderr <contact@folderr.net>
 */
 package cmd
 
@@ -15,7 +15,7 @@ import (
 var authFlag string
 var dry bool
 
-var rootCmdName = "folderr-cli"
+var rootCmdName = "foldcli"
 var envPrefix = "FOLDCLI_"
 
 // rootCmd represents the base command when called without any subcommands
