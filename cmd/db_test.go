@@ -17,17 +17,17 @@ func TestSetupFolderrDb(t *testing.T) {
 
 	args := []string{"folderr-cli-testing", "--no-cleanup", "-v"} // name of the testing db for this project
 	rootCmd.SetOut(actual)
-	rootCmd.SetArgs(append([]string{"setup", "folderr-db"}, args...))
+	rootCmd.SetArgs(append([]string{"setup", "db"}, args...))
 	_, err := rootCmd.ExecuteC()
 	t.Log(actual.String())
 	if err != nil {
-		t.Fatalf("Command "+rootCmdName+" setup folderr-db %v failed because of error, %v", args[0], err)
+		t.Fatalf("Command "+rootCmdName+" setup db %v failed because of error, %v", args[0], err)
 	}
 	if strings.Contains(actual.String(), "Folderr appears to be setup") {
 		t.Fatal("Using pre-setup version of Folderr. Test invalid.")
 	}
 	if !strings.Contains(actual.String(), "END RSA PRIVATE KEY") {
-		t.Logf("Command "+rootCmdName+" setup folderr-db %v failed because unexpected output", args[0])
+		t.Logf("Command "+rootCmdName+" setup db %v failed because unexpected output", args[0])
 		t.FailNow()
 	}
 }
@@ -42,11 +42,11 @@ func TestSetupFolderrDbPresetup(t *testing.T) {
 
 	args := []string{"folderr-cli-testing", "--no-cleanup", "-v"} // name of the testing db for this project
 	rootCmd.SetOut(actual)
-	rootCmd.SetArgs(append([]string{"setup", "folderr-db"}, args...))
+	rootCmd.SetArgs(append([]string{"setup", "db"}, args...))
 	_, err := rootCmd.ExecuteC()
 	t.Log(actual.String())
 	if err != nil {
-		t.Fatalf("Command folderr-cli setup folderr-db %v failed because of error, %v", args[0], err)
+		t.Fatalf("Command folderr-cli setup db %v failed because of error, %v", args[0], err)
 	}
 	t.Log(strings.Contains(actual.String(), "Folderr appears to be setup"))
 	if !strings.Contains(actual.String(), "Folderr appears to be setup") {
@@ -64,7 +64,7 @@ func TestSetupFolderrDbCleanup(t *testing.T) {
 
 	args := []string{"folderr-cli-testing", "--no-cleanup", "-v"} // name of the testing db for this project
 	rootCmd.SetOut(actual)
-	rootCmd.SetArgs(append([]string{"setup", "folderr-db"}, args...))
+	rootCmd.SetArgs(append([]string{"setup", "db"}, args...))
 
 	cleanupFolderrDbCmd(args[0], ConfigDir)
 	t.Log(actual.String())

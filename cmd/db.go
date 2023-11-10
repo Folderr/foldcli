@@ -210,10 +210,9 @@ func cleanupFolderrDbCmd(dbName, path string) {
 }
 
 func init() {
-	setupCmd.AddCommand(folderrDBCmd)
-
 	folderrDBCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Shows information aside from key output.")
 	folderrDBCmd.Flags().BoolVar(&noCleanup, "no-cleanup", false, "Does not cleanup if running in test mode. Only useful for data peekers and developers.")
+	setupCmd.AddCommand(folderrDBCmd)
 
 	// Here you will define your flags and configuration settings.
 
