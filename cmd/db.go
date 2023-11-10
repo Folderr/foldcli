@@ -39,7 +39,7 @@ Test with "test" env variable. Do not use production database name/url when test
 		_, err := ReadConfig()
 		if err != nil {
 			println("Failed to read config. see below")
-			panic(err)
+			return err
 		}
 		if dry {
 			return fmt.Errorf(`command \"` + rootCmdName + ` setup db\" does not have dry-run mode
@@ -92,14 +92,14 @@ Run with test env var for automatic cleanup of files and database entries`)
 		println(save_dir)
 		privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		if privateKey.Validate() != nil {
-			panic(privateKey.Validate())
+			return privateKey.Validate()
 		}
 		privBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		privBlock := pem.Block{
 			Type:    "RSA PRIVATE KEY",
@@ -112,7 +112,7 @@ Run with test env var for automatic cleanup of files and database entries`)
 		// write private key
 		err = os.WriteFile(save_dir+"/privateJWT.pem", privatePem, 0700)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		if verbose {
 			println("Saving private key to", save_dir+"/privateJWT.pem")
@@ -131,7 +131,7 @@ Run with test env var for automatic cleanup of files and database entries`)
 		// write public key in case something goes wrong
 		err = os.WriteFile(save_dir+"/publicJWT.pem", publicPem, 0755)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		if verbose {
 			fmt.Println("Saving public key to", save_dir+"/publicJWT.pem", "in case anything goes wrong")
