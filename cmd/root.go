@@ -102,6 +102,8 @@ func ReadConfig() (bool, error) {
 	if dry && os.Getenv("test") == "true" {
 		dir, err = os.MkdirTemp(os.TempDir(), ".folderr-cli-")
 		var runner = os.Getenv("RUNNER_TEMP")
+		println(runner)
+		println(os.Getenv("CI"))
 		if len(runner) > 0 && os.Getenv("CI") == "true" {
 			dir, err = os.MkdirTemp(runner, ".folderr-cli-")
 		}
