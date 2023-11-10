@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestSetupFolderrDb(t *testing.T) {
@@ -19,9 +18,6 @@ func TestSetupFolderrDb(t *testing.T) {
 	args := []string{"folderr-cli-testing", "--no-cleanup", "-v"} // name of the testing db for this project
 	rootCmd.SetOut(actual)
 	rootCmd.SetArgs(append([]string{"setup", "db"}, args...))
-	if os.Getenv("CI") == "true" { // try to fix weird temp dir issue on gh actions
-		time.Sleep(time.Duration(time.Duration.Seconds(1)))
-	}
 	_, err := rootCmd.ExecuteC()
 	t.Log(actual.String())
 	if err != nil {
