@@ -101,12 +101,6 @@ func ReadConfig() (bool, error) {
 	// config stuffs
 	if dry && os.Getenv("test") == "true" {
 		dir, err = os.MkdirTemp(os.TempDir(), ".folderr-cli-")
-		var runner = os.Getenv("RUNNER_TEMP")
-		println(runner)
-		println(os.Getenv("CI"))
-		if len(runner) > 0 && os.Getenv("CI") == "true" {
-			dir, err = os.MkdirTemp(runner, ".folderr-cli-")
-		}
 		if err != nil {
 			println("Failed to make temp dir for dry-run")
 			panic(err)
@@ -139,8 +133,13 @@ func ReadConfig() (bool, error) {
 		}
 		return false, nil
 	}
+	// Make a temp dir for tests & dry runs
 	if (err != nil && dry) || os.Getenv("test") == "true" {
 		dir, err = os.MkdirTemp(os.TempDir(), ".folderr-cli-")
+		var runner = os.Getenv("RUNNER_TEMP")
+		if len(runner) > 0 && os.Getenv("CI") == "true" {
+			dir, err = os.MkdirTemp(runner, ".folderr-cli-")
+		}
 		if err != nil {
 			println("Failed to make temp dir for dry-run")
 			panic(err)

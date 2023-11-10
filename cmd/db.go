@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
@@ -50,9 +49,6 @@ Run with test env var for automatic cleanup of files and database entries`)
 			return fmt.Errorf("provide db-name argument. \"db-name\" is the name of the database you'll use for your Folderr install")
 		}
 
-		if os.Getenv("CI") == "true" {
-			time.Sleep(time.Duration(time.Duration.Seconds(1)))
-		}
 		save_dir := ConfigDir
 		println(save_dir)
 		if len(args) >= 2 {
