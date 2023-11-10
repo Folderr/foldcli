@@ -23,6 +23,14 @@ var verbose, noCleanup bool
 
 var FolderrDbInsertedId *mongo.InsertOneResult
 
+func ReadConfigLoop() bool {
+	ReadConfig()
+	if ConfigDir == "" {
+		return ReadConfigLoop()
+	}
+	return true
+}
+
 // folderrDBCmd represents the folderr command
 var folderrDBCmd = &cobra.Command{
 	Use:   "db [db_name] (path_for_private_key)",
@@ -37,7 +45,9 @@ Does not have dry-run mode. Cannot accurately test with a dry run mode.
 Test with "test" env variable. Do not use production database name/url when testing.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		_, err := ReadConfig()
-		println(ConfigDir)
+		if ConfigDir == "" {
+			ReadConfigLoop()
+		}
 		if err != nil {
 			println("Failed to read config. see below")
 			return err
@@ -91,7 +101,6 @@ Run with test env var for automatic cleanup of files and database entries`)
 		}
 		// generate keys
 		// this is for private keys
-		println(save_dir)
 		privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 		if err != nil {
 			return err
@@ -110,7 +119,6 @@ Run with test env var for automatic cleanup of files and database entries`)
 		}
 
 		privatePem := pem.EncodeToMemory(&privBlock)
-		println(ConfigDir)
 
 		if verbose {
 			println("Saving private key to", save_dir+"/privateJWT.pem")
