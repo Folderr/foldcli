@@ -109,6 +109,7 @@ Run with test env var for automatic cleanup of files and database entries`)
 		}
 
 		privatePem := pem.EncodeToMemory(&privBlock)
+		println(ConfigDir)
 
 		if verbose {
 			println("Saving private key to", save_dir+"/privateJWT.pem")
