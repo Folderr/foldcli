@@ -34,6 +34,7 @@ jobs:
           MONGO_URI: ${{ secrets.MONGO_URI }}
       - name: Upload Go test results
         uses: actions/upload-artifact@v3
+        if: always()
         with:
           name: Go-results-${{ matrix.go-version }}-${{ matrix.os }}
           path: TestResults-${{ matrix.go-version }}-${{ matrix.os }}.json
