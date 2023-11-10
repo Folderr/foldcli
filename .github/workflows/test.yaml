@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: go get .
       - name: Test with Go & Output
-        run: go test ./cmd -json > TestResults-${{ matrix.go-version }}-${{ matrix.os }}-${{ env.GITHUB_SHA }}.json
+        run: go test ./cmd -json > TestResults-${{ matrix.go-version }}-${{ matrix.os }}-$GITHUB_SHA.json
         env:
           test: true
           MONGO_URI: ${{ secrets.MONGO_URI }}
@@ -36,5 +36,5 @@ jobs:
         uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: Go-results-${{ matrix.go-version }}-${{ matrix.os }}-${{ env.GITHUB_SHA }}
-          path: TestResults-${{ matrix.go-version }}-${{ matrix.os }}-${{ env.GITHUB_SHA }}.json
+          name: Go-results-${{ matrix.go-version }}-${{ matrix.os }}-$GITHUB_SHA
+          path: TestResults-${{ matrix.go-version }}-${{ matrix.os }}-$GITHUB_SHA.json
