@@ -134,12 +134,14 @@ func ReadConfig() (bool, error) {
 		return false, nil
 	}
 	// Make a temp dir for tests & dry runs
-	if (err != nil && dry) || os.Getenv("test") == "true" {
-		dir, err = os.MkdirTemp(os.TempDir(), ".folderr-cli-")
+	if (err != nil && dry) || os.Getenv("test") == "true" || os.Getenv("CI") == "true" {
+		var tempdir = os.TempDir()
 		var runner = os.Getenv("RUNNER_TEMP")
-		if len(runner) > 0 && os.Getenv("CI") == "true" {
-			dir, err = os.MkdirTemp(runner, ".folderr-cli-")
+		println(runner)
+		if len(runner) > 0 {
+			tempdir = runner
 		}
+		dir, err = os.MkdirTemp(tempdir, ".folderr-cli-")
 		if err != nil {
 			println("Failed to make temp dir for dry-run")
 			panic(err)
@@ -147,7 +149,7 @@ func ReadConfig() (bool, error) {
 		viper.Reset()
 		viper.SetConfigType("yaml")
 		viper.AddConfigPath(dir)
-		ldir, err := os.MkdirTemp(os.TempDir(), "Folderr-")
+		ldir, err := os.MkdirTemp(tempdir, "Folderr-")
 		if err != nil {
 			panic(err)
 		}
