@@ -22,12 +22,13 @@ var envPrefix = "FOLDCLI_"
 var rootCmd = &cobra.Command{
 	Use:   rootCmdName,
 	Short: "A CLI to manage Folderr installations",
-	Long: `A CLI to setup and manage your Folderr instance For example:
+	Long: `A CLI to setup and manage your Folderr instance. Get started with:
 ` + rootCmdName + ` init /home/folderr/folderr https://github.com/Folderr/<repo>
-` + rootCmdName + ` init
-` + rootCmdName + ` install
-` + rootCmdName + ` setup (not added)`,
-	Version: "Alpha 0.0.2",
+` + rootCmdName + ` init`,
+	Version: "Alpha 0.0.3",
+	CompletionOptions: cobra.CompletionOptions{
+		DisableDefaultCmd: true,
+	},
 	// Cleanup for dry-run commands
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		if dry && strings.Contains(config.directory, os.TempDir()) {
@@ -186,6 +187,7 @@ func printf(format string, a ...any) {
 
 func init() {
 	// rootCmd.PersistentFlags().BoolVar(&dry, "dry", false, "Runs the command but does not change ANYTHING")
+	rootCmd.SetVersionTemplate("Folderr CLI Version: {{ .Version }}")
 	rootCmd.PersistentFlags().BoolVar(&dry, "dry", false, "Runs the command but does not change anything")
 	rootCmd.ParseFlags(os.Args)
 	// Here you will define your flags and configuration settings.
@@ -196,5 +198,4 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
