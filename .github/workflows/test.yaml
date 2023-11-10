@@ -31,6 +31,7 @@ jobs:
         run: go test ./cmd -json > TestResults-${{ matrix.go-version }}-${{ matrix.os }}.json
         env:
           test: true
+          MONGO_URI: ${{ secrets.MONGO_URI }}
       - name: Upload Go test results
         uses: actions/upload-artifact@v3
         with:
