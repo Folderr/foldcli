@@ -50,6 +50,7 @@ Run with test env var for automatic cleanup of files and database entries`)
 		}
 
 		save_dir := ConfigDir
+		println(save_dir)
 		if len(args) >= 2 {
 			save_dir = args[1]
 		} else {
