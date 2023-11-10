@@ -110,13 +110,16 @@ Run with test env var for automatic cleanup of files and database entries`)
 
 		privatePem := pem.EncodeToMemory(&privBlock)
 
+		if verbose {
+			println("Saving private key to", save_dir+"/privateJWT.pem")
+		}
 		// write private key
 		err = os.WriteFile(save_dir+"/privateJWT.pem", privatePem, 0700)
 		if err != nil {
 			return err
 		}
 		if verbose {
-			println("Saving private key to", save_dir+"/privateJWT.pem")
+			println("Saved private key to", save_dir+"/privateJWT.pem")
 		}
 
 		// do public key fuckery
@@ -129,13 +132,16 @@ Run with test env var for automatic cleanup of files and database entries`)
 		}
 
 		publicPem := pem.EncodeToMemory(&pubBlock)
+		if verbose {
+			fmt.Println("Saving public key to", save_dir+"/publicJWT.pem", "in case anything goes wrong")
+		}
 		// write public key in case something goes wrong
 		err = os.WriteFile(save_dir+"/publicJWT.pem", publicPem, 0755)
 		if err != nil {
 			return err
 		}
 		if verbose {
-			fmt.Println("Saving public key to", save_dir+"/publicJWT.pem", "in case anything goes wrong")
+			fmt.Println("Saved public key to", save_dir+"/publicJWT.pem", "in case anything goes wrong")
 		}
 		FolderrDbInsertedId, err = coll.InsertOne(context.TODO(), bson.D{
 			{Key: "bans", Value: []string{}},
