@@ -16,7 +16,6 @@ func TestSetupFolderrDb(t *testing.T) {
 	os.Setenv("test", "true")
 
 	args := []string{"folderr-cli-testing", "--no-cleanup", "-v"} // name of the testing db for this project
-	println(args)
 	rootCmd.SetOut(actual)
 	rootCmd.SetArgs(append([]string{"setup", "db"}, args...))
 	_, err := rootCmd.ExecuteC()

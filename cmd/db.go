@@ -42,7 +42,7 @@ Test with "test" env variable. Do not use production database name/url when test
 			panic(err)
 		}
 		if dry {
-			return fmt.Errorf(`command \"` + rootCmdName + ` setup folderr-db\" does not have dry-run mode
+			return fmt.Errorf(`command \"` + rootCmdName + ` setup db\" does not have dry-run mode
 Run with test env var for automatic cleanup of files and database entries`)
 		}
 		if len(args) < 1 {
@@ -89,6 +89,7 @@ Run with test env var for automatic cleanup of files and database entries`)
 		}
 		// generate keys
 		// this is for private keys
+		println(save_dir)
 		privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 		if err != nil {
 			panic(err)
