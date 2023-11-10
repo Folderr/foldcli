@@ -37,6 +37,7 @@ Does not have dry-run mode. Cannot accurately test with a dry run mode.
 Test with "test" env variable. Do not use production database name/url when testing.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		_, err := ReadConfig()
+		println(ConfigDir)
 		if err != nil {
 			println("Failed to read config. see below")
 			return err
