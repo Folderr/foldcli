@@ -45,9 +45,6 @@ Does not have dry-run mode. Cannot accurately test with a dry run mode.
 Test with "test" env variable. Do not use production database name/url when testing.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		_, err := ReadConfig()
-		if ConfigDir == "" {
-			ReadConfigLoop()
-		}
 		if err != nil {
 			println("Failed to read config. see below")
 			return err
@@ -59,9 +56,11 @@ Run with test env var for automatic cleanup of files and database entries`)
 		if len(args) < 1 {
 			return fmt.Errorf("provide db-name argument. \"db-name\" is the name of the database you'll use for your Folderr install")
 		}
+		if ConfigDir == "" {
+			ReadConfigLoop()
+		}
 
 		save_dir := ConfigDir
-		println(save_dir)
 		if len(args) >= 2 {
 			save_dir = args[1]
 		} else {
