@@ -194,7 +194,7 @@ func printf(format string, a ...any) {
 
 func init() {
 	// rootCmd.PersistentFlags().BoolVar(&dry, "dry", false, "Runs the command but does not change ANYTHING")
-	rootCmd.SetVersionTemplate("Folderr CLI Version: {{ .Version }}")
+	rootCmd.SetVersionTemplate("Folderr CLI Version: {{ .Version }}\n")
 	rootCmd.PersistentFlags().BoolVar(&dry, "dry", false, "Runs the command but does not change anything")
 	rootCmd.ParseFlags(os.Args)
 	// Here you will define your flags and configuration settings.
