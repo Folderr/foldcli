@@ -25,7 +25,7 @@ var rootCmd = &cobra.Command{
 	Long: `A CLI to setup and manage your Folderr instance. Get started with:
 ` + rootCmdName + ` init /home/folderr/folderr https://github.com/Folderr/<repo>
 ` + rootCmdName + ` init`,
-	Version: "Alpha 0.0.3",
+	Version: "Alpha 0.0.4",
 	CompletionOptions: cobra.CompletionOptions{
 		DisableDefaultCmd: true,
 	},
