@@ -119,6 +119,12 @@ Run with test env var for automatic cleanup of files and database entries`)
 
 		privatePem := pem.EncodeToMemory(&privBlock)
 
+		// do public key fuckery
+		pubBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+		if err != nil {
+			return err
+		}
+
 		if verbose {
 			println("Saving private key to", save_dir+"/privateJWT.pem")
 		}
@@ -130,9 +136,6 @@ Run with test env var for automatic cleanup of files and database entries`)
 		if verbose {
 			println("Saved private key to", save_dir+"/privateJWT.pem")
 		}
-
-		// do public key fuckery
-		pubBytes := x509.MarshalPKCS1PublicKey(&privateKey.PublicKey)
 
 		pubBlock := pem.Block{
 			Type:    "RSA PUBLIC KEY",
