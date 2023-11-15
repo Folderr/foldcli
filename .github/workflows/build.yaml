@@ -5,7 +5,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: ["windows-latest", "ubuntu-latest"]
+        os: ["ubuntu-latest"]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -16,5 +16,21 @@ jobs:
           go-version: '1.20.x'
       - name: Install dependencies
         run: go get .
-      - name: Build
-        run: go build -v ./...
+      - name: Build Linux amd64
+        run: GOARCH=amd64 go build -v -o foldcli-amd64-linux .
+      - name: Build Linux arm64
+        run: GOARCH=arm64 go build -v -o foldcli-arm64-linux .
+      - name: Build Windows amd64
+        run: GOARCH=amd64 GOOS=windows go build -v -o foldcli-amd64-win.exe .
+      - name: Build Windows arm64
+        run: GOARCH=arm64 GOOS=windows go build -v -o foldcli-arm64-win.exe .
+      - name: Build MacOS arm64
+        run: GOARCH=arm64 GOOS=darwin go build -v -o foldcli-arm64-macos .
+      - name: Build MacOS amd64
+        run: GOARCH=amd64 GOOS=darwin go build -v -o foldcli-amd64-macos .
+      - name: Upload Build Results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: foldcli executables
+          path: foldcli*
