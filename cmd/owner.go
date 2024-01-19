@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/fossoreslp/go-uuid-v4"
@@ -168,11 +169,25 @@ If you believe this to be a bug please submit an issue at https://github.com/Fol
 			Admin:     true,
 		}
 
-		fmt.Println(ownerUser)
 		_, err = coll.InsertOne(context.TODO(), ownerUser)
-		if err != nil {
+		if mongo.IsTimeout(err) {
+			println("Server Timeout Error:", err.Error(), "\nThis can mean that the server is offline, you're offline, or there is (at least) a firewall in the way")
+			return nil
+		} else if mongo.IsNetworkError(err) {
+			println("Network Error:", err.Error())
+			return nil
+		} else if err != nil {
+			if strings.Contains(err.Error(), "Unauthorized") || strings.Contains(err.Error(), "unauthorized") {
+				println(
+					"Authorization error. Please provide authentication information in the string, before the host.\n",
+					"Alternatively the error could mean you do not have permissions on this database.\n",
+					"Error:",
+					err.Error(),
+				)
+				return nil
+			}
 			fmt.Println("Encountered error while uploading your user data")
-			fmt.Println("Please submit issue with template \"bug report\" at https://github.com/Folderr/folderr-cli/issues and error below")
+			fmt.Println("Please submit issue with template \"bug report\" at https://github.com/Folderr/folderr-cli/issues with the error below")
 			fmt.Println(err)
 			os.Exit(1)
 		}

@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"os"
@@ -91,9 +92,27 @@ Run with test env var for automatic cleanup of files and database entries`)
 		db := client.Database(args[0])
 		coll := db.Collection("folderrs")
 		fldrr := coll.FindOne(context.TODO(), bson.D{})
-		if fldrr.Err() != mongo.ErrNoDocuments {
-			if fldrr.Err() != nil {
-				panic(err)
+		err = fldrr.Err()
+		if err != mongo.ErrNoDocuments {
+			if mongo.IsTimeout(err) {
+				println("Server Timeout Error:", err.Error(), "\nThis can mean that the server is offline, you're offline, or there is (at least) a firewall in the way")
+				return nil
+			} else if mongo.IsNetworkError(err) {
+				println("Network Error:", err.Error())
+				return nil
+			} else if err != nil {
+				if strings.Contains(err.Error(), "Unauthorized") || strings.Contains(err.Error(), "unauthorized") {
+					println(
+						"Authorization error. Please provide authentication information in the string, before the host.\n",
+						"Alternatively the error could mean you do not have permissions on this database.\n",
+						"Error:",
+						err.Error(),
+					)
+					return nil
+				}
+				fmt.Println("Encountered error while uploading your user data")
+				fmt.Println("Please submit issue with template \"bug report\" at https://github.com/Folderr/folderr-cli/issues with the error below")
+				fmt.Println(err)
 			}
 			println("Folderr appears to be setup")
 			return nil
@@ -163,8 +182,18 @@ Run with test env var for automatic cleanup of files and database entries`)
 			panic(err)
 		}
 
-		formattedKey := string(privatePem)
-		println(strings.TrimSpace(formattedKey))
+		// formattedKey := string(privatePem)
+		// println(strings.TrimSpace(formattedKey))
+		println("The key was saved in ", save_dir, "under 'privateKeyJWT.pem'")
+		println("If this is not the location of your Folderr installation, please follow the directions below.")
+		println("Please put this private key in your Folderr installs directory under 'internal/keys/privateKeyJWT' and modify the 'internal/locations.json' file to be")
+		// TODO: Set up a way to do this for the user.
+		fileContent, err := json.MarshalIndent(`{ keys: "internal", keysConfigured: true }`, "", "	")
+		if err != nil {
+			println(`{"keys": "internal", "keysConfigured": true}`)
+		} else {
+			println(string(fileContent))
+		}
 		return nil
 	},
 }
