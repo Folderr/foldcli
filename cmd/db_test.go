@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestSetupFolderrDb(t *testing.T) {
+func TestSetupDb(t *testing.T) {
 	// set MONGO_URI before running this test
 	if os.Getenv("MONGO_URI") == "" {
 		t.Skip("No MONGO_URI environment variable provided. No DB operations available")
@@ -32,7 +32,7 @@ func TestSetupFolderrDb(t *testing.T) {
 	}
 }
 
-func TestSetupFolderrDbPresetup(t *testing.T) {
+func TestSetupDbPresetup(t *testing.T) {
 	// set MONGO_URI before running this test
 	if os.Getenv("MONGO_URI") == "" {
 		t.Skip("No MONGO_URI environment variable provided. No DB operations available")
@@ -54,7 +54,7 @@ func TestSetupFolderrDbPresetup(t *testing.T) {
 	}
 }
 
-func TestSetupFolderrDbCleanup(t *testing.T) {
+func TestSetupDbCleanup(t *testing.T) {
 	// set MONGO_URI before running this test
 	if os.Getenv("MONGO_URI") == "" {
 		t.Skip("No MONGO_URI environment variable provided. No DB operations available")
