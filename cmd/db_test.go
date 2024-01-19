@@ -26,7 +26,7 @@ func TestSetupFolderrDb(t *testing.T) {
 	if strings.Contains(actual.String(), "Folderr appears to be setup") {
 		t.Fatal("Using pre-setup version of Folderr. Test invalid.")
 	}
-	if !strings.Contains(actual.String(), "END RSA PRIVATE KEY") {
+	if !strings.Contains(actual.String(), "If this is not the location of your Folderr installation, please follow the directions below.") {
 		t.Logf("Command "+rootCmdName+" setup db %v failed because unexpected output", args[0])
 		t.FailNow()
 	}
