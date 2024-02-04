@@ -32,6 +32,47 @@ func ReadConfigLoop() bool {
 	return true
 }
 
+// Generates public & private PEM encoded keys for Folderr's usage in its authentication handling.
+func genKeys() ([]byte, []byte, error) {
+	// generate keys
+	// this is for private keys
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, nil, err
+	}
+	if privateKey.Validate() != nil {
+		return nil, nil, privateKey.Validate()
+	}
+	// Turned to a PKCS8 key so Folderr's JWT library (node-jwt) can hopefully read it
+	privBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	privBlock := pem.Block{
+		Type:    "RSA PRIVATE KEY",
+		Headers: nil,
+		Bytes:   privBytes,
+	}
+
+	privatePem := pem.EncodeToMemory(&privBlock)
+
+	// We turn this key to a PKIX key so Folderr's JWT library (node-jwt) can hopefully read it
+	pubBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pubBlock := pem.Block{
+		Type:    "RSA PUBLIC KEY",
+		Headers: nil,
+		Bytes:   pubBytes,
+	}
+
+	publicPem := pem.EncodeToMemory(&pubBlock)
+
+	return privatePem, publicPem, nil
+}
+
 // folderrDBCmd represents the folderr command
 var folderrDBCmd = &cobra.Command{
 	Use:   "db [db_name] (path_for_private_key)",
@@ -117,29 +158,8 @@ Run with test env var for automatic cleanup of files and database entries`)
 			println("Folderr appears to be setup")
 			return nil
 		}
-		// generate keys
-		// this is for private keys
-		privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-		if err != nil {
-			return err
-		}
-		if privateKey.Validate() != nil {
-			return privateKey.Validate()
-		}
-		privBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
-		if err != nil {
-			return err
-		}
-		privBlock := pem.Block{
-			Type:    "RSA PRIVATE KEY",
-			Headers: nil,
-			Bytes:   privBytes,
-		}
 
-		privatePem := pem.EncodeToMemory(&privBlock)
-
-		// do public key fuckery
-		pubBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+		privatePem, publicPem, err := genKeys()
 		if err != nil {
 			return err
 		}
@@ -156,13 +176,6 @@ Run with test env var for automatic cleanup of files and database entries`)
 			println("Saved private key to", save_dir+"/privateJWT.pem")
 		}
 
-		pubBlock := pem.Block{
-			Type:    "RSA PUBLIC KEY",
-			Headers: nil,
-			Bytes:   pubBytes,
-		}
-
-		publicPem := pem.EncodeToMemory(&pubBlock)
 		if verbose {
 			fmt.Println("Saving public key to", save_dir+"/publicJWT.pem", "in case anything goes wrong")
 		}
