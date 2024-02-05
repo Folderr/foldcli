@@ -78,15 +78,15 @@ var keygenCmd = &cobra.Command{
 		if err != nil && !os.IsNotExist(err) {
 			return err
 		}
-		if !os.IsNotExist(err) {
+		if !os.IsNotExist(err) && !keygenOverride {
 			keysExist = append(keysExist, "Private key exists, please delete it or choose a different name")
 		}
 		_, err = os.Stat(args[1])
 		if err != nil && !os.IsNotExist(err) {
 			return err
 		}
-		if !os.IsNotExist(err) {
-			keysExist = append(keysExist, "Error: ublic key exists, please delete it or choose a different name")
+		if !os.IsNotExist(err) && !keygenOverride {
+			keysExist = append(keysExist, "Error: Public key exists, please delete it or choose a different name")
 		}
 
 		if len(keysExist) > 0 {
