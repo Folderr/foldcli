@@ -33,10 +33,7 @@ func GenKeys() ([]byte, []byte, error) {
 	privatePem := pem.EncodeToMemory(&privBlock)
 
 	// We turn this key to a PKIX key so Folderr's JWT library (node-jwt) can hopefully read it
-	pubBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
-	if err != nil {
-		return nil, nil, err
-	}
+	pubBytes := x509.MarshalPKCS1PublicKey(&privateKey.PublicKey)
 
 	pubBlock := pem.Block{
 		Type:    "RSA PUBLIC KEY",
