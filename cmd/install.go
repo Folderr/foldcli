@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Masterminds/semver"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/storer"
@@ -195,10 +196,13 @@ var installCmd = &cobra.Command{
 		if err != nil {
 			println("An error occurred while fetching the repository. Error:", err)
 		}
-		highestVer, highest := determineHighestVersionTags(tags)
+		highestVer, highest, err := newDetermineHighestVersion(tags)
 		// Determine if tag or commit based releases should be used.
+		if err != nil {
+			println("An error occurred while determining the highest tag:", err)
+		}
 		var releaseType string
-		if len(highestVer) < 1 || highestVer[0] < 2 {
+		if highestVer == nil {
 			println("Not using Tags for updating...")
 			println("Reason: Latest tag is too old. (Pre V2)")
 			viper.Set("releaseType", "commit")
@@ -312,78 +316,47 @@ var installCmd = &cobra.Command{
 	},
 }
 
-func determineHighestVersionTags(tags storer.ReferenceIter) ([]int, *plumbing.Reference) {
+func newDetermineHighestVersion(tags storer.ReferenceIter) (*semver.Version, *plumbing.Reference, error) {
+	c, err := semver.NewConstraint(">= 2.0.0-0")
+	if err != nil {
+		return nil, nil, err
+	}
+
 	var highest *plumbing.Reference
-	var highestVer []int = []int{}
+
 	tags.ForEach(func(r *plumbing.Reference) error {
 		if !strings.HasPrefix(r.Name().Short(), "v") && !strings.HasPrefix(r.Name().Short(), "V") {
 			return nil
 		}
-		if highest == nil {
-			highest = r
-			return nil
+
+		var highestVersion *semver.Version
+		if highest != nil {
+			// I don't really care if this errors, if it errors then we'll just set highest
+			localVersion, _ := semver.NewVersion(highest.Name().Short())
+			highestVersion = localVersion
 		}
-		// convert into versions
-		highestStr := highest.Name().Short()
-		highestStr, _ = strings.CutPrefix(highestStr, "v")
-		highestStr, _ = strings.CutPrefix(highestStr, "V")
-		current := r.Name().Short()
-		current, _ = strings.CutPrefix(current, "v")
-		current, _ = strings.CutPrefix(current, "V")
-		for _, i := range strings.Split(highestStr, ".") {
-			j, err := strconv.Atoi(i)
-			if err != nil {
-				panic(err)
-			}
-			highestVer = append(highestVer, j)
+		version := r.Name().Short()
+		v, err := semver.NewVersion(version)
+		if err != nil {
+			return err
 		}
-		var currentVer []int = []int{}
-		for _, item := range strings.Split(current, ".") {
-			j, err := strconv.Atoi(item)
-			if err != nil {
-				panic(err)
-			}
-			currentVer = append(currentVer, j)
-		}
-		max := len(currentVer)
-		if len(currentVer) > len(highestVer) {
-			max = len(highestVer)
-		}
-		status := []int{}
-		for i := 0; i < max; i++ {
-			if currentVer[i] > highestVer[i] {
-				status = append(status, 1)
-			} else if currentVer[i] == highestVer[i] {
-				status = append(status, 0)
-			} else {
-				status = append(status, -1)
+
+		if c.Check(v) {
+			if highestVersion == nil {
+				highest = r
+			} else if v.GreaterThan(highestVersion) {
+				highest = r
 			}
 		}
-		// NOTE: works fine with 3 levels of versioning.
-		// Unsure if works with more...
-		canUpdate := false
-		// if status[0] >= 0 major is higher or same
-		// if status[1] >= 0 minor is higher or same
-		// if status[2] >= 0 patch is higher or same
-		// if status[2] < 0 but status[1] > 0 then minor is higher
-		// if status[0] < 0 version is lower.
-		if status[0] >= 0 && status[1] >= 0 {
-			if len(status) > 2 && status[2] >= 0 {
-				for i := 2; i < len(status); i++ {
-					if status[i] >= 0 {
-						canUpdate = true
-					}
-				}
-			} else if status[1] > 0 {
-				canUpdate = true
-			}
-		}
-		if canUpdate {
-			highest = r
-		}
+
 		return nil
 	})
-	return highestVer, highest
+
+	if highest != nil {
+		v, _ := semver.NewVersion(highest.Name().Short())
+		return v, highest, nil
+	}
+	return nil, nil, nil
 }
 
 func init() {
