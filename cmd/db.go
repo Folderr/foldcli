@@ -153,9 +153,9 @@ Run with test env var for automatic cleanup of files and database entries`)
 
 		// formattedKey := string(privatePem)
 		// println(strings.TrimSpace(formattedKey))
-		println("The key was saved in ", save_dir, "under 'privateKeyJWT.pem'")
+		println("The key was saved in ", save_dir, "under 'privateJWT.pem'")
 		println("If this is not the location of your Folderr installation, please follow the directions below.")
-		println("Please put this private key in your Folderr installs directory under 'internal/keys/privateKeyJWT' and modify the 'internal/locations.json' file to be...")
+		println("Please put this private key in your Folderr installs directory under 'internal/keys/privateJWT' and modify the 'internal/locations.json' file to be...")
 		// TODO: Set up a way to do this for the user.
 		fileContent, err := json.MarshalIndent(`{ keys: "internal", keysConfigured: true }`, "", "	")
 		if err != nil {
