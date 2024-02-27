@@ -24,18 +24,19 @@ import (
 var ownerUsername, ownerPassword, ownerEmail string
 
 type User struct {
-	Id        string         `bson:"id"`
-	Password  string         `bson:"password"`
-	Email     string         `bson:"email"`
-	Username  string         `bson:"username"`
-	Admin     bool           `bson:"admin"`
-	Owner     bool           `bson:"owner"`
-	CURLs     []string       `bson:"cURLs"`
-	Files     int            `bson:"files"`
-	Links     int            `bson:"links"`
-	Notifs    []Notification `bson:"notifs"`
-	CreatedAt time.Time      `bson:"createdAt"`
-	Privacy   UserPrivacy    `bson:"privacy"`
+	Id                string         `bson:"id"`
+	Password          string         `bson:"password"`
+	Email             string         `bson:"email"`
+	Username          string         `bson:"username"`
+	Admin             bool           `bson:"admin"`
+	Owner             bool           `bson:"owner"`
+	CURLs             []string       `bson:"cURLs"`
+	Files             int            `bson:"files"`
+	Links             int            `bson:"links"`
+	Notifs            []Notification `bson:"notifs"`
+	CreatedAt         time.Time      `bson:"createdAt"`
+	Privacy           UserPrivacy    `bson:"privacy"`
+	MarkedForDeletion bool           `bson:"markedForDeletion"`
 }
 
 type Notification struct {
@@ -160,13 +161,14 @@ If you believe this to be a bug please submit an issue at https://github.com/Fol
 		}
 
 		ownerUser := User{
-			Id:        uid,
-			Username:  ownerUsername,
-			Email:     ownerEmail,
-			Password:  hashed,
-			CreatedAt: time.Now(),
-			Owner:     true,
-			Admin:     true,
+			Id:                uid,
+			Username:          ownerUsername,
+			Email:             ownerEmail,
+			Password:          hashed,
+			CreatedAt:         time.Now(),
+			Owner:             true,
+			Admin:             true,
+			MarkedForDeletion: false,
 		}
 
 		_, err = coll.InsertOne(context.TODO(), ownerUser)
