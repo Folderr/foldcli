@@ -18,8 +18,8 @@ var dry bool
 var rootCmdName = "foldcli"
 var envPrefix = "FOLDCLI_"
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
+// RootCmd represents the base command when called without any subcommands
+var RootCmd = &cobra.Command{
 	Use:   rootCmdName,
 	Short: "A CLI to manage Folderr installations",
 	Long: `A CLI to setup and manage your Folderr instance. Get started with:
@@ -53,7 +53,7 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	err := rootCmd.Execute()
+	err := RootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
@@ -185,18 +185,18 @@ func ReadConfig() (bool, error) {
 }
 
 func println(a ...any) {
-	fmt.Fprintln(rootCmd.OutOrStdout(), a...)
+	fmt.Fprintln(RootCmd.OutOrStdout(), a...)
 }
 
 func printf(format string, a ...any) {
-	fmt.Fprintf(rootCmd.OutOrStdout(), format, a...)
+	fmt.Fprintf(RootCmd.OutOrStdout(), format, a...)
 }
 
 func init() {
 	// rootCmd.PersistentFlags().BoolVar(&dry, "dry", false, "Runs the command but does not change ANYTHING")
-	rootCmd.SetVersionTemplate("Folderr CLI Version: {{ .Version }}\n")
-	rootCmd.PersistentFlags().BoolVar(&dry, "dry", false, "Runs the command but does not change anything")
-	rootCmd.ParseFlags(os.Args)
+	RootCmd.SetVersionTemplate("Folderr CLI Version: {{ .Version }}\n")
+	RootCmd.PersistentFlags().BoolVar(&dry, "dry", false, "Runs the command but does not change anything")
+	RootCmd.ParseFlags(os.Args)
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.

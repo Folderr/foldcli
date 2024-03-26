@@ -1,13 +1,12 @@
-package cmd
+package init
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"os"
-	"runtime"
 	"strings"
 
+	"github.com/Folderr/foldcli/utilities"
 	"github.com/go-git/go-git/v5"
 	transport "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/go-git/go-git/v5/storage/memory"
@@ -16,64 +15,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-var mkdir, override bool
+var mkdir, override, dry bool
+var authFlag string
 
 func init() {
-	initCmd.Flags().BoolVar(&mkdir, "mkdir", false, "Make directories if they don't exist")
-	initCmd.Flags().BoolVarP(&override, "override", "o", false, "Override previous settings")
-	initCmd.Flags().StringVarP(&authFlag, "authorization", "a", "", "Authorization token for private repositories")
-	rootCmd.AddCommand(initCmd)
+	folderrCmd.Flags().BoolVar(&mkdir, "mkdir", false, "Make directories if they don't exist")
+	folderrCmd.Flags().BoolVarP(&override, "override", "o", false, "Override previous settings")
+	folderrCmd.Flags().StringVarP(&authFlag, "authorization", "a", "", "Authorization token for private repositories")
+	folderrCmd.Flags().BoolVar(&dry, "dry", false, "Whether or not to run the command in dry-run mode")
+	initCmd.AddCommand(folderrCmd)
 }
 
-func checkifExists(input string) bool {
-	if _, err := os.Stat(input); err == nil {
-		return true
-	} else if errors.Is(err, os.ErrNotExist) {
-		return false
-	} else {
-		return false
-	}
-}
-
-func isValidPath(input string) bool {
-	if runtime.GOOS == "windows" { // Having to handle this because the NT kernel.
-		if len(strings.SplitN(input, ":", 2)) < 1 {
-			return false
-		}
-		if !strings.Contains(input, "/") && !strings.Contains(input, "\\\\") && !strings.Contains(input, "\\") {
-			return false
-		}
-		return true
-	}
-	if strings.Contains(input, "/") {
-		return true
-	}
-	return false
-}
-
-func manipulateDir(input string) string {
-	result := input
-	if runtime.GOOS == "windows" && !strings.Contains(input, "\\\\") { // Because windows. Fuck you Windows.
-		result = strings.ReplaceAll(result, "/", "\\")
-	}
-	return result
-}
-
-func dirChecks(input string) bool {
-	isValid := isValidPath(input)
-	if !isValid {
-		println("That is NOT a valid directory!")
-		os.Exit(1)
-	}
-	return checkifExists(input)
-}
-
-// Interactive setup
-// CANNOT TEST
-// COBRA DOES NOT SUPPLY io.ReadCloser or io.WriteCloser
-// COBRA SUPPLIES io.Reader and io.Writer
-func interactiveDirectory() (bool, error) {
-	if config.directory != "" && !override {
+func interactiveDirectory(config utilities.Config) (bool, error) {
+	if config.Directory != "" && !override {
 		return true, nil
 	}
 	prompt := promptui.Prompt{
@@ -93,7 +47,7 @@ func interactiveDirectory() (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		result = manipulateDir(result)
+		result = utilities.ManipulateDir(result)
 		exists := dirChecks(result)
 		if !exists {
 			mkdirPrompt := promptui.Prompt{
@@ -130,8 +84,8 @@ func interactiveDirectory() (bool, error) {
 // CANNOT TEST
 // COBRA DOES NOT SUPPLY io.ReadCloser or io.WriteCloser
 // COBRA SUPPLIES io.Reader and io.Writer
-func interactiveRepository() (bool, error) {
-	if config.repository != "" && !override {
+func interactiveRepository(config utilities.Config) (bool, error) {
+	if config.Repository != "" && !override {
 		return true, nil
 	}
 	prompt := promptui.Prompt{
@@ -214,14 +168,14 @@ func interactiveRepository() (bool, error) {
 
 // Functions based on args instead of interactive
 // CAN TEST
-func dirStatic(args []string) (bool, error) {
-	if config.directory != "" && !override {
+func dirStatic(config utilities.Config, args []string) (bool, error) {
+	if config.Directory != "" && !override {
 		return true, nil
 	}
 	if len(args) < 1 {
 		return false, nil
 	}
-	ldir := manipulateDir(args[0])
+	ldir := utilities.ManipulateDir(args[0])
 	exists := dirChecks(ldir)
 	if !exists && !mkdir {
 		println("Cannot use a directory that does not exist")
@@ -246,8 +200,8 @@ func dirStatic(args []string) (bool, error) {
 	return true, nil
 }
 
-func repositoryStatic(args []string) (bool, error) {
-	if config.repository != "" && !override {
+func repositoryStatic(config utilities.Config, args []string) (bool, error) {
+	if config.Repository != "" && !override {
 		return true, nil
 	}
 	if len(args) < 2 {
@@ -296,25 +250,29 @@ func repositoryStatic(args []string) (bool, error) {
 	return true, nil
 }
 
-var initCmd = &cobra.Command{
-	Use:   "init [directory] [repository]",
-	Short: "Initalize your Folderr CLI config",
+var folderrCmd = &cobra.Command{
+	Use:   "folderr [directory] [repository]",
+	Short: "Initalize config for foldcli Folderr commands",
 	Long: `Initalize your Folderr CLI config interactively or non-interactively.
 If a repository is provided non-interactively, the authorization flag MUST be supplied if it is private or else it will fail.
 Interactivity happens when you do not provide the listed arguments (excluding flags)`,
 	ValidArgs: []string{"directory", "repository"},
-	Run: func(cmd *cobra.Command, args []string) {
-		_, err := ReadConfig()
+	RunE: func(command *cobra.Command, args []string) error {
+		dir, err := utilities.GetConfigDir(dry)
+		if err != nil {
+			return err
+		}
+		_, config, _, err := utilities.ReadConfig(dir, dry)
 		if err != nil {
 			panic(err)
 		}
 		var fails []string
 		noFail := true
 		if len(args) == 0 {
-			noFail, err = interactiveDirectory()
+			noFail, err = interactiveDirectory(config)
 		}
 		if len(args) > 0 {
-			noFail, err = dirStatic(args)
+			noFail, err = dirStatic(config, args)
 		}
 		if err != nil {
 			panic(err)
@@ -323,10 +281,10 @@ Interactivity happens when you do not provide the listed arguments (excluding fl
 			fails = append(fails, "directory")
 		}
 		if len(args) < 2 || strings.Contains(args[1], "--") {
-			noFail, err = interactiveRepository()
+			noFail, err = interactiveRepository(config)
 		}
 		if len(args) > 1 && !strings.Contains(args[1], "--") {
-			noFail, err = repositoryStatic(args)
+			noFail, err = repositoryStatic(config, args)
 		}
 		if err != nil {
 			panic(err)
@@ -344,5 +302,6 @@ Interactivity happens when you do not provide the listed arguments (excluding fl
 		if dry {
 			println("No changes were made.")
 		}
+		return nil
 	},
 }

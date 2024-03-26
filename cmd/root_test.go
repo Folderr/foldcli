@@ -11,13 +11,13 @@ import (
 func TestRoot(t *testing.T) {
 	os.Setenv("test", "true")
 	actual := &bytes.Buffer{}
-	rootCmd.SetOut(actual)
-	rootCmd.SetArgs([]string{"--dry"})
-	err := rootCmd.Execute()
+	RootCmd.SetOut(actual)
+	RootCmd.SetArgs([]string{"--dry"})
+	err := RootCmd.Execute()
 	if err != nil {
 		t.Fatal("Root Command failed with error", err)
 	}
-	prefix := strings.HasPrefix(actual.String(), rootCmd.Long)
+	prefix := strings.HasPrefix(actual.String(), RootCmd.Long)
 	suffix := strings.Contains(actual.String(), `Use "`+rootCmdName+` [command] --help" for more information about a command.`)
 
 	if !prefix || !suffix {

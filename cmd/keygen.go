@@ -98,5 +98,5 @@ var keygenCmd = &cobra.Command{
 
 func init() {
 	keygenCmd.Flags().BoolVarP(&keygenOverride, "force", "f", false, "Override the current keys, if they eixst")
-	rootCmd.AddCommand(keygenCmd)
+	RootCmd.AddCommand(keygenCmd)
 }

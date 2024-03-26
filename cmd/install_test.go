@@ -11,14 +11,14 @@ import (
 func TestInstall(t *testing.T) {
 	os.Setenv("test", "true")
 	actual := &bytes.Buffer{}
-	cmd, args, err := rootCmd.Find([]string{"install", "--dry"})
+	cmd, args, err := RootCmd.Find([]string{"install", "--dry"})
 	if err != nil {
 		t.Fatal("Failed due to error", err)
 	}
 	// init command usage: init [directory] [repository]
 	// we'll use github.com/Folderr/Docs here as its a public repository
-	rootCmd.SetArgs([]string{"install", "--dry"})
-	rootCmd.SetOut(actual)
+	RootCmd.SetArgs([]string{"install", "--dry"})
+	RootCmd.SetOut(actual)
 	_, err = cmd.ExecuteC()
 	t.Log(actual.String())
 	if err != nil {

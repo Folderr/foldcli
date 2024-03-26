@@ -361,7 +361,7 @@ func newDetermineHighestVersion(tags storer.ReferenceIter) (*semver.Version, *pl
 
 func init() {
 	installCmd.Flags().StringVarP(&authFlag, "authorization", "a", "", "Authorization token for private repositories")
-	rootCmd.AddCommand(installCmd)
+	RootCmd.AddCommand(installCmd)
 
 	// Here you will define your flags and configuration settings.
 

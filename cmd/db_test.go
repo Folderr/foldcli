@@ -16,9 +16,9 @@ func TestSetupDb(t *testing.T) {
 	os.Setenv("test", "true")
 
 	args := []string{"folderr-cli-testing", "--no-cleanup", "-v"} // name of the testing db for this project
-	rootCmd.SetOut(actual)
-	rootCmd.SetArgs(append([]string{"setup", "db"}, args...))
-	_, err := rootCmd.ExecuteC()
+	RootCmd.SetOut(actual)
+	RootCmd.SetArgs(append([]string{"setup", "db"}, args...))
+	_, err := RootCmd.ExecuteC()
 	t.Log(actual.String())
 	if err != nil {
 		t.Fatalf("Command "+rootCmdName+" setup db %v failed because of error, %v", args[0], err)
@@ -41,9 +41,9 @@ func TestSetupDbPresetup(t *testing.T) {
 	os.Setenv("test", "true")
 
 	args := []string{"folderr-cli-testing", "--no-cleanup", "-v"} // name of the testing db for this project
-	rootCmd.SetOut(actual)
-	rootCmd.SetArgs(append([]string{"setup", "db"}, args...))
-	_, err := rootCmd.ExecuteC()
+	RootCmd.SetOut(actual)
+	RootCmd.SetArgs(append([]string{"setup", "db"}, args...))
+	_, err := RootCmd.ExecuteC()
 	t.Log(actual.String())
 	if err != nil {
 		t.Fatalf("Command folderr-cli setup db %v failed because of error, %v", args[0], err)
@@ -63,8 +63,8 @@ func TestSetupDbCleanup(t *testing.T) {
 	os.Setenv("test", "true")
 
 	args := []string{"folderr-cli-testing", "--no-cleanup", "-v"} // name of the testing db for this project
-	rootCmd.SetOut(actual)
-	rootCmd.SetArgs(append([]string{"setup", "db"}, args...))
+	RootCmd.SetOut(actual)
+	RootCmd.SetArgs(append([]string{"setup", "db"}, args...))
 
 	cleanupFolderrDbCmd(args[0], ConfigDir)
 	t.Log(actual.String())

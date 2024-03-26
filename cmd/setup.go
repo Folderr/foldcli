@@ -17,7 +17,7 @@ DO NOT RUN IN DRY RUN MODE, IT WILL CHANGE THINGS`,
 }
 
 func init() {
-	rootCmd.AddCommand(setupCmd)
+	RootCmd.AddCommand(setupCmd)
 
 	// Here you will define your flags and configuration settings.
 
