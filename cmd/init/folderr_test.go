@@ -19,6 +19,9 @@ func TestInit(t *testing.T) {
 	}
 	actual := &bytes.Buffer{}
 	dir, err := utilities.GetConfigDir(true)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if dir == "" {
 		dir = t.TempDir()
 	}
