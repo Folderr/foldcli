@@ -7,6 +7,7 @@ package main
 import (
 	"github.com/Folderr/foldcli/cmd"
 	_ "github.com/Folderr/foldcli/cmd/init"
+	_ "github.com/Folderr/foldcli/cmd/install"
 )
 
 func main() {
