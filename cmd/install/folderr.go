@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 
@@ -21,46 +20,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-func findSystemCommandVersion(command string, hasPrefix bool, prefix string) (string, error) {
-	execCmd, err := findSystemCommand(command, []string{"-v"})
-	if err != nil {
-		return "", err
-	}
-	output, err := execCmd.CombinedOutput()
-	if err != nil {
-		fmt.Printf("It would seem I encountered an error. Is %v installed?\n", command)
-		println("Here's the error:", err)
-		return "", err
-	}
-	fmt.Printf("Printing output from executing \"%v -v\"\n", command)
-	// transform output into integers.
-	out := string(output)
-	out = strings.TrimSpace(out)
-	println(out)
-	if !hasPrefix {
-		return out, nil
-	}
-	if strings.HasPrefix(out, prefix) {
-		out, _ = strings.CutPrefix(out, prefix)
-	} else {
-		fmt.Printf("Got unexpected output from running \"%v -v\". Contact developers.\n", command)
-		println("Contact developers at https://github.com/Folderr/Folderr-CLI/issues")
-		println("Output:", out)
-		return "", nil
-	}
-	return out, nil
-}
-
-func findSystemCommand(command string, args []string) (*exec.Cmd, error) {
-	cmdPath, err := exec.LookPath(command)
-	if err != nil {
-		fmt.Printf("I can't find %v. Is %v installed?\n", command, command)
-		println("Error for debug purposes:", err)
-		return nil, err
-	}
-	return exec.Command(cmdPath, args...), nil
-}
 
 func cloneFolderr(config utilities.Config, options *git.CloneOptions, dry bool) (*git.Repository, error) {
 	if dry {
@@ -94,7 +53,7 @@ var installFolderr = &cobra.Command{
 			return nil
 		}
 		println("Checking if NodeJS is installed")
-		out, err := findSystemCommandVersion("node", true, "v")
+		out, err := utilities.FindSystemCommandVersion("node", true, "v")
 		if err != nil {
 			return err
 		}
@@ -107,7 +66,7 @@ var installFolderr = &cobra.Command{
 		// ensure NPM is installed
 		// we don't care about the actual version tbh.
 		println("Checking if NPM is installed")
-		npm, err := findSystemCommandVersion("npm", false, "")
+		npm, err := utilities.FindSystemCommandVersion("npm", false, "")
 		if err != nil {
 			panic(err)
 		}
@@ -118,7 +77,7 @@ var installFolderr = &cobra.Command{
 		}
 		println("NPM appears to be installed")
 		println("Checking for TypeScript installation")
-		tsc, err := findSystemCommandVersion("tsc", true, "Version ")
+		tsc, err := utilities.FindSystemCommandVersion("tsc", true, "Version ")
 		if err != nil {
 			return err
 		}
@@ -299,7 +258,7 @@ var installFolderr = &cobra.Command{
 		if config.Repository == "https://github.com/Folderr/Folderr" && os.Getenv("test") != "true" {
 			args = append(args, "--ignore scripts")
 		}
-		npmCmd, err := findSystemCommand("npm", args)
+		npmCmd, err := utilities.FindSystemCommand("npm", args)
 		if err != nil {
 			panic(err)
 		}
