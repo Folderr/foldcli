@@ -8,15 +8,15 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Folderr/foldcli/utilities"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var authFlag string
 var dry bool
 
-var rootCmdName = "foldcli"
-var envPrefix = "FOLDCLI_"
+var rootCmdName = utilities.Constants.RootCmdName
+var envPrefix = utilities.Constants.EnvPrefix
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -168,9 +168,6 @@ func ReadConfig() (bool, error) {
 			panic(err)
 		}
 	}
-	if getToken() != "" {
-		authFlag = getToken()
-	}
 	if viper.IsSet("repository") {
 		config.repository = viper.GetString("repository")
 	}
@@ -186,10 +183,6 @@ func ReadConfig() (bool, error) {
 
 func println(a ...any) {
 	fmt.Fprintln(RootCmd.OutOrStdout(), a...)
-}
-
-func printf(format string, a ...any) {
-	fmt.Fprintf(RootCmd.OutOrStdout(), format, a...)
 }
 
 func init() {
