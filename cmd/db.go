@@ -31,7 +31,7 @@ func ReadConfigLoop() bool {
 
 // folderrDBCmd represents the folderr command
 var folderrDBCmd = &cobra.Command{
-	Use:   "db [db_name] (path_for_private_key)",
+	Use:   "db (path_for_private_key)",
 	Short: "Set up Folderr DB & Keys",
 	Long: `Set up Folderr's database structures and security (encryption) keys
 Returns the private key in a file AND as output
@@ -42,7 +42,11 @@ NOTES:
 Does not have dry-run mode. Cannot accurately test with a dry run mode.
 Test with "test" env variable. Do not use production database name/url when testing.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		_, err := ReadConfig()
+		dir, err := utilities.GetConfigDir(dry)
+		if err != nil {
+			panic(err)
+		}
+		_, config, _, err := utilities.ReadConfig(dir, dry)
 		if err != nil {
 			println("Failed to read config. see below")
 			return err
@@ -54,21 +58,17 @@ Run with test env var for automatic cleanup of files and database entries`)
 		if len(args) < 1 {
 			return fmt.Errorf("provide db-name argument. \"db-name\" is the name of the database you'll use for your Folderr install")
 		}
-		if ConfigDir == "" {
-			ReadConfigLoop()
-		}
-
-		save_dir := ConfigDir
-		if len(args) >= 2 {
-			save_dir = args[1]
+		save_dir := dir
+		if len(args) >= 1 {
+			save_dir = args[0]
 		} else {
 			if verbose {
 				println("Using default config dir", save_dir, "to save keys in")
 			}
 		}
 		uri := os.Getenv("MONGO_URI")
-		if uri == "" {
-			return fmt.Errorf("set environment variable \"MONGO_URI\" before running this command. thanks")
+		if config.Database.Url == "" || config.Database.DbName == "" {
+			return fmt.Errorf("run \"" + utilities.Constants.RootCmdName + " init db\" before this command. thanks")
 		}
 
 		client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
@@ -83,10 +83,10 @@ Run with test env var for automatic cleanup of files and database entries`)
 		}()
 
 		if os.Getenv("test") == "true" && !noCleanup {
-			defer cleanupFolderrDbCmd(args[0], save_dir)
+			defer cleanupFolderrDbCmd(config, args[0], save_dir)
 		}
 
-		db := client.Database(args[0])
+		db := client.Database(config.Database.DbName)
 		coll := db.Collection("folderrs")
 		fldrr := coll.FindOne(context.TODO(), bson.D{})
 		err = fldrr.Err()
@@ -167,9 +167,9 @@ Run with test env var for automatic cleanup of files and database entries`)
 	},
 }
 
-func cleanupFolderrDbCmd(dbName, path string) {
+func cleanupFolderrDbCmd(config utilities.Config, dbName, path string) {
 	// make a new database connection
-	uri := os.Getenv("MONGO_URI")
+	uri := config.Database.Url
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
@@ -226,6 +226,8 @@ func cleanupFolderrDbCmd(dbName, path string) {
 		println("Cleaned up", strings.Join(cleaned, ", "))
 	}
 }
+
+var folderrDBCmdDbName string
 
 func init() {
 	folderrDBCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Shows information aside from key output.")

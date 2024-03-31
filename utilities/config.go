@@ -9,9 +9,15 @@ import (
 )
 
 type Config struct {
-	Directory  string
-	Repository string
-	CanInstall bool
+	Directory  string   `json:"directory"`
+	Repository string   `json:"repository"`
+	CanInstall bool     `json:"CanInstall"`
+	Database   DBConfig `json:"db" mapstructure:"db"`
+}
+
+type DBConfig struct {
+	DbName string `json:"dbName"`
+	Url    string `json:"url"`
 }
 
 type SecretConfig struct {
@@ -38,14 +44,6 @@ func GetConfigDir(dry bool) (string, error) {
 		return "", err
 	}
 	dir = dir + "/.folderr/cli"
-	return dir, nil
-}
-
-func ReadConfig(directory string, dry bool) (bool, Config, SecretConfig, error) {
-	viper.SetConfigType("yaml")
-	// config stuffs
-	dir := directory
-	var err error
 	if dry && os.Getenv("test") == "true" {
 		dir, err = os.MkdirTemp(os.TempDir(), ".foldcli-")
 		if err != nil {
@@ -53,8 +51,29 @@ func ReadConfig(directory string, dry bool) (bool, Config, SecretConfig, error) 
 			panic(err)
 		}
 	}
-	viper.AddConfigPath(dir)
-	err = viper.ReadInConfig()
+	if os.Getenv("test") == "true" || os.Getenv("CI") == "true" {
+		var tempdir = os.TempDir()
+		var runner = os.Getenv("RUNNER_TEMP")
+		if len(runner) > 0 {
+			tempdir = runner
+		}
+		dir, err = os.MkdirTemp(tempdir, ".foldcli-")
+		if err != nil {
+			println("Failed to make temp dir for dry-run")
+			panic(err)
+		}
+	}
+	return dir, nil
+}
+
+func ReadConfig(directory string, dry bool) (*viper.Viper, Config, SecretConfig, error) {
+	v := viper.New()
+	v.SetConfigType("yaml")
+	// config stuffs
+	dir := directory
+	var err error
+	v.AddConfigPath(dir)
+	err = v.ReadInConfig()
 	config := Config{}
 	secrets := SecretConfig{}
 	// If in dry-run mode we don't care if there is a config or not.
@@ -65,70 +84,78 @@ func ReadConfig(directory string, dry bool) (bool, Config, SecretConfig, error) 
 		println("Notice: No changes as in dry-run mode.")
 		println("Here's the error:", err)
 	} else if err != nil && !strings.Contains(err.Error(), "Not Found") {
-		return false, config, secrets, err
+		return v, config, secrets, err
 	} else if err != nil {
 		err = os.MkdirAll(dir, 0770)
 		if err != nil {
-			return false, config, secrets, err
+			return v, config, secrets, err
 		}
 
 		_, err = os.Create(dir + "/config.yaml")
 		if err != nil {
-			return false, config, secrets, err
+			return v, config, secrets, err
 		}
-		err = viper.WriteConfig()
+		err = v.WriteConfig()
 		if err != nil {
-			return false, config, secrets, err
+			return v, config, secrets, err
 		}
-		return false, Config{}, secrets, nil
+		return v, Config{}, secrets, nil
+	}
+
+	err = v.Unmarshal(&config)
+	if err != nil {
+		panic(err)
+	}
+
+	if dry {
+		if dbUrl := os.Getenv("DB_URI"); dbUrl != "" {
+			config.Database.Url = dbUrl
+			v.Set("db.url", config.Database.Url)
+		}
+	}
+
+	if os.Getenv(Constants.EnvPrefix+"DB_NAME") != "" {
+		config.Database.DbName = os.Getenv(Constants.EnvPrefix + "DB_NAME")
 	}
 
 	// Make a temp dir for tests & dry runs
-	if (err != nil && dry) || os.Getenv("test") == "true" || os.Getenv("CI") == "true" {
+	if os.Getenv("test") == "true" || os.Getenv("CI") == "true" {
 		var tempdir = os.TempDir()
 		var runner = os.Getenv("RUNNER_TEMP")
-		println(runner)
 		if len(runner) > 0 {
 			tempdir = runner
 		}
-		dir, err = os.MkdirTemp(tempdir, ".foldcli-")
-		if err != nil {
-			println("Failed to make temp dir for dry-run")
-			panic(err)
-		}
-		viper.Reset()
-		viper.SetConfigType("yaml")
-		viper.AddConfigPath(dir)
 		ldir, err := os.MkdirTemp(tempdir, "Folderr-")
 		if err != nil {
 			panic(err)
 		}
 		// We DO NOT care about any config in dry-run mode.
 		config.Directory = ldir
+
 		if GetGitToken() != "" {
 			config.Repository = "https://github.com/Folderr/Folderr"
 		} else {
 			config.Repository = "https://github.com/Folderr/Docs"
 		}
-		viper.Set("repository", config.Repository)
-		viper.Set("directory", config.Directory)
-		err = viper.SafeWriteConfig()
+		if dbUrl := os.Getenv("DB_URI"); dbUrl != "" {
+			config.Database.Url = dbUrl
+			v.Set("db.url", config.Database.Url)
+		}
+		v.Set("repository", config.Repository)
+		v.Set("directory", config.Directory)
+		v.Set("db.dbName", config.Database.DbName)
+		err = v.SafeWriteConfig()
 		if err != nil {
 			fmt.Println("Tried working with temp directories. No luck.")
 			panic(err)
 		}
 	}
+
 	if GetGitToken() != "" {
 		secrets.GitToken = GetGitToken()
-	}
-	if viper.IsSet("repository") {
-		config.Repository = viper.GetString("repository")
-	}
-	if viper.IsSet("directory") {
-		config.Directory = viper.GetString("directory")
 	}
 	if config.Directory != "" && config.Repository != "" {
 		config.CanInstall = true
 	}
-	return true, config, secrets, nil
+	return v, config, secrets, nil
 }

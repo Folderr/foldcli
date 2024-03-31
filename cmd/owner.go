@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Folderr/foldcli/utilities"
 	"github.com/fossoreslp/go-uuid-v4"
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
@@ -60,13 +61,14 @@ db_name is required for uploading the account`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// prechecks
 
-		uri := os.Getenv("MONGO_URI")
-		if uri == "" {
-			return fmt.Errorf(`need to provide MONGO_URI env variable
-MONGO_URI is for adding the owner to the database`)
+		dir, err := utilities.GetConfigDir(dry)
+		if err != nil {
+			panic(err)
 		}
-		if len(args) < 1 {
-			return fmt.Errorf("provide db-name argument. \"db-name\" is the name of the database you'll use for your Folderr install")
+		_, config, _, err := utilities.ReadConfig(dir, dry)
+		uri := config.Database.Url
+		if uri == "" || config.Database.DbName == "" {
+			return fmt.Errorf("please run \"" + rootCmdName + " init db\" before running this command. thanks")
 		}
 
 		// P: Puncuation unicode
