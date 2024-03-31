@@ -227,8 +227,6 @@ func cleanupFolderrDbCmd(config utilities.Config, dbName, path string) {
 	}
 }
 
-var folderrDBCmdDbName string
-
 func init() {
 	folderrDBCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Shows information aside from key output.")
 	folderrDBCmd.Flags().BoolVar(&noCleanup, "no-cleanup", false, "Does not cleanup if running in test mode. Only useful for data peekers and developers.")
