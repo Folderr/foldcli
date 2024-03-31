@@ -48,7 +48,7 @@ Test with "test" env variable. Do not use production database name/url when test
 		}
 		_, config, _, err := utilities.ReadConfig(dir, dry)
 		if err != nil {
-			println("Failed to read config. see below")
+			cmd.Println("Failed to read config. see below")
 			return err
 		}
 		if dry {
@@ -63,7 +63,7 @@ Run with test env var for automatic cleanup of files and database entries`)
 			save_dir = args[0]
 		} else {
 			if verbose {
-				println("Using default config dir", save_dir, "to save keys in")
+				cmd.Println("Using default config dir", save_dir, "to save keys in")
 			}
 		}
 		uri := os.Getenv("MONGO_URI")
@@ -92,10 +92,10 @@ Run with test env var for automatic cleanup of files and database entries`)
 		err = fldrr.Err()
 		if err != mongo.ErrNoDocuments {
 			if mongo.IsTimeout(err) {
-				println("Server Timeout Error:", err.Error(), "\nThis can mean that the server is offline, you're offline, or there is (at least) a firewall in the way")
+				cmd.Println("Server Timeout Error:", err.Error(), "\nThis can mean that the server is offline, you're offline, or there is (at least) a firewall in the way")
 				return nil
 			} else if mongo.IsNetworkError(err) {
-				println("Network Error:", err.Error())
+				cmd.Println("Network Error:", err.Error())
 				return nil
 			} else if err != nil {
 				if strings.Contains(err.Error(), "Unauthorized") || strings.Contains(err.Error(), "unauthorized") {
@@ -107,11 +107,11 @@ Run with test env var for automatic cleanup of files and database entries`)
 					)
 					return nil
 				}
-				fmt.Println("Encountered error while uploading your user data")
-				fmt.Println("Please submit issue with template \"bug report\" at https://github.com/Folderr/folderr-cli/issues with the error below")
-				fmt.Println(err)
+				cmd.Println("Encountered error while uploading your user data")
+				cmd.Println("Please submit issue with template \"bug report\" at https://github.com/Folderr/folderr-cli/issues with the error below")
+				cmd.Println(err)
 			}
-			println("Folderr appears to be setup")
+			cmd.Println("Folderr appears to be setup")
 			return nil
 		}
 
@@ -121,7 +121,7 @@ Run with test env var for automatic cleanup of files and database entries`)
 		}
 
 		if verbose {
-			println("Saving private key to", save_dir+"/privateJWT.pem")
+			cmd.Println("Saving private key to", save_dir+"/privateJWT.pem")
 		}
 		// write private key
 		err = os.WriteFile(save_dir+"/privateJWT.pem", privatePem, 0700)
@@ -129,11 +129,11 @@ Run with test env var for automatic cleanup of files and database entries`)
 			return err
 		}
 		if verbose {
-			println("Saved private key to", save_dir+"/privateJWT.pem")
+			cmd.Println("Saved private key to", save_dir+"/privateJWT.pem")
 		}
 
 		if verbose {
-			fmt.Println("Saving public key to", save_dir+"/publicJWT.pem", "in case anything goes wrong")
+			cmd.Println("Saving public key to", save_dir+"/publicJWT.pem", "in case anything goes wrong")
 		}
 		// write public key in case something goes wrong
 		err = os.WriteFile(save_dir+"/publicJWT.pem", publicPem, 0755)
@@ -141,7 +141,7 @@ Run with test env var for automatic cleanup of files and database entries`)
 			return err
 		}
 		if verbose {
-			fmt.Println("Saved public key to", save_dir+"/publicJWT.pem", "in case anything goes wrong")
+			cmd.Println("Saved public key to", save_dir+"/publicJWT.pem", "in case anything goes wrong")
 		}
 		FolderrDbInsertedId, err = coll.InsertOne(context.TODO(), bson.D{
 			{Key: "bans", Value: []string{}},
@@ -153,15 +153,15 @@ Run with test env var for automatic cleanup of files and database entries`)
 
 		// formattedKey := string(privatePem)
 		// println(strings.TrimSpace(formattedKey))
-		println("The key was saved in ", save_dir, "under 'privateJWT.pem'")
-		println("If this is not the location of your Folderr installation, please follow the directions below.")
-		println("Please put this private key in your Folderr installs directory under 'internal/keys/privateJWT' and modify the 'internal/locations.json' file to be...")
+		cmd.Println("The key was saved in ", save_dir, "under 'privateJWT.pem'")
+		cmd.Println("If this is not the location of your Folderr installation, please follow the directions below.")
+		cmd.Println("Please put this private key in your Folderr installs directory under 'internal/keys/privateJWT' and modify the 'internal/locations.json' file to be...")
 		// TODO: Set up a way to do this for the user.
 		fileContent, err := json.MarshalIndent(`{ keys: "internal", keysConfigured: true }`, "", "	")
 		if err != nil {
-			println(`{"keys": "internal", "keysConfigured": true}`)
+			cmd.Println(`{"keys": "internal", "keysConfigured": true}`)
 		} else {
-			println(string(fileContent))
+			cmd.Println(string(fileContent))
 		}
 		return nil
 	},
