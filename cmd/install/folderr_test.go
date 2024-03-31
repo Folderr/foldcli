@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Folderr/foldcli/cmd"
 	"github.com/Folderr/foldcli/utilities"
 )
 
@@ -22,17 +21,18 @@ func TestInstall(t *testing.T) {
 		t.Fatal("Failed due to error", err)
 	}
 	actual := &bytes.Buffer{}
-	command, args, err := cmd.RootCmd.Find([]string{"install", "--dry"})
+	command, args, err := installCmd.Find([]string{"folderr", "--dry"})
+	t.Log(command.Root().Use)
 	if err != nil {
 		t.Fatal("Failed due to error", err)
 	}
 	// we'll use github.com/Folderr/Docs here as its a public repository
-	cmd.RootCmd.SetArgs([]string{"install", "--dry"})
-	cmd.RootCmd.SetOut(actual)
+	command.Root().SetOut(actual)
+	command.Root().SetArgs([]string{"install", "folderr", "--dry"})
 	_, err = command.ExecuteC()
 	t.Log(actual.String())
 	if err != nil {
-		t.Errorf(`Command "`+utilities.Constants.RootCmdName+`install %v" failed because of error, %v`, args[0], err)
+		t.Errorf(`Command "`+utilities.Constants.RootCmdName+` install folderr %v" failed because of error, %v`, args[0], err)
 	}
 	suffix := []string{
 		"Clone successful",
@@ -43,7 +43,7 @@ func TestInstall(t *testing.T) {
 	for _, i := range suffix {
 		if !strings.Contains(actual.String(), i) {
 			t.Error(
-				`Command "`+utilities.Constants.EnvPrefix+` install" did not produce expected out`,
+				`Command "`+utilities.Constants.RootCmdName+` install folderr" did not produce expected out`,
 				`\nExpected `+i+` and did not get that.`,
 			)
 		}
