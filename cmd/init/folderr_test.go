@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Folderr/foldcli/cmd"
 	"github.com/Folderr/foldcli/utilities"
 )
 
@@ -26,15 +25,15 @@ func TestInit(t *testing.T) {
 		dir = t.TempDir()
 	}
 	args := []string{dir, repo, "--dry", "-o"}
-	command, args, err := cmd.RootCmd.Find(append([]string{"init folderr"}, args...))
-	cmd.RootCmd.SetOut(actual)
+	command, args, err := initCmd.Find(append([]string{"folderr"}, args...))
+	command.Root().SetOut(actual)
 	if err != nil {
 		t.Fatal("Failed due to error", err)
 	}
 	// init command usage: init folderr [directory] [repository]
 	// we'll use github.com/Folderr/Docs here as its a public repository
 
-	cmd.RootCmd.SetArgs(append([]string{"init folderr"}, args...))
+	command.Root().SetArgs(append([]string{"init", "folderr"}, args...))
 	_, err = command.ExecuteC()
 	t.Log(actual.String())
 	if err != nil {

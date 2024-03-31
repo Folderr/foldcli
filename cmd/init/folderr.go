@@ -294,13 +294,13 @@ Interactivity happens when you do not provide the listed arguments (excluding fl
 		}
 
 		if len(fails) > 0 {
-			println("One or more aspects of setup failed.")
-			println("Failures:", strings.Join(fails, ", "))
+			command.Println("One or more aspects of setup failed.")
+			command.Println("Failures:", strings.Join(fails, ", "))
 		} else {
-			println("It looks like your Folderr CLI is initialized!")
+			command.Println("It looks like your Folderr CLI is initialized!")
 		}
 		if dry {
-			println("No changes were made.")
+			command.Println("No changes were made.")
 		}
 		return nil
 	},
