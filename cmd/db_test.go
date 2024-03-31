@@ -79,7 +79,7 @@ func TestSetupDbCleanup(t *testing.T) {
 	RootCmd.SetOut(actual)
 	RootCmd.SetArgs(append([]string{"setup", "db"}, args...))
 
-	cleanupFolderrDbCmd(config, config.Database.DbName, ConfigDir)
+	cleanupFolderrDbCmd(config, config.Database.DbName, config.Directory)
 	t.Log(actual.String())
 
 	if !strings.HasPrefix(actual.String(), "Cleaned up ") {

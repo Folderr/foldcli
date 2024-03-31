@@ -21,14 +21,6 @@ var verbose, noCleanup bool
 
 var FolderrDbInsertedId *mongo.InsertOneResult
 
-func ReadConfigLoop() bool {
-	ReadConfig()
-	if ConfigDir == "" {
-		return ReadConfigLoop()
-	}
-	return true
-}
-
 // folderrDBCmd represents the folderr command
 var folderrDBCmd = &cobra.Command{
 	Use:   "db (path_for_private_key)",
