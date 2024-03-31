@@ -16,13 +16,12 @@ func TestInstall(t *testing.T) {
 	if err != nil {
 		t.Fatal("Failed due to error", err)
 	}
-	_, config, _, err := utilities.ReadConfig(dir, true)
+	_, sharedConfig, _, err = utilities.ReadConfig(dir, true)
 	if err != nil {
 		t.Fatal("Failed due to error", err)
 	}
 	actual := &bytes.Buffer{}
 	command, args, err := installCmd.Find([]string{"folderr", "--dry"})
-	t.Log(command.Root().Use)
 	if err != nil {
 		t.Fatal("Failed due to error", err)
 	}
@@ -38,7 +37,7 @@ func TestInstall(t *testing.T) {
 		"Clone successful",
 		"Checkout successful",
 		"Install seems to have gone correctly.",
-		`To build Folderr go to "` + config.Directory + `" and type "npm run build:production"`,
+		`To build Folderr go to "` + sharedConfig.Directory + `" and type "npm run build:production"`,
 	}
 	for _, i := range suffix {
 		if !strings.Contains(actual.String(), i) {

@@ -33,6 +33,7 @@ func cloneFolderr(config utilities.Config, options *git.CloneOptions, dry bool) 
 
 var dry bool
 var authFlag string
+var sharedConfig utilities.Config
 
 // installCmd represents the install command
 var installFolderr = &cobra.Command{
@@ -40,53 +41,60 @@ var installFolderr = &cobra.Command{
 	Short: "Install Folderr into the directory setup with \"foldcli init folderr\"",
 	Long:  `Checks for Folderrs dependencies and installs Folderr`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		dir, err := utilities.GetConfigDir(dry)
-		if err != nil {
-			return err
-		}
-		_, config, _, err := utilities.ReadConfig(dir, dry)
-		if err != nil {
-			panic(err)
+		var config utilities.Config
+		fmt.Printf("%+v", sharedConfig)
+		if sharedConfig.Directory != "" {
+			fmt.Println("Hi!")
+			config = sharedConfig
+		} else {
+			dir, err := utilities.GetConfigDir(dry)
+			if err != nil {
+				return err
+			}
+			_, config, _, err = utilities.ReadConfig(dir, dry)
+			if err != nil {
+				panic(err)
+			}
 		}
 		if !config.CanInstall {
-			println("Folderr CLI is not initialized. Run \"" + utilities.Constants.RootCmdName + " init\" to fix this issue.")
+			cmd.Println("Folderr CLI is not initialized. Run \"" + utilities.Constants.RootCmdName + " init\" to fix this issue.")
 			return nil
 		}
-		println("Checking if NodeJS is installed")
+		cmd.Println("Checking if NodeJS is installed")
 		out, err := utilities.FindSystemCommandVersion("node", true, "v")
 		if err != nil {
 			return err
 		}
 		if out == "" {
-			println("NodeJS not installed. Aborting.")
-			println("Install Node before running this command!")
+			cmd.Println("NodeJS not installed. Aborting.")
+			cmd.Println("Install Node before running this command!")
 			return nil
 		}
-		println("NodeJS appears to be installed!")
+		cmd.Println("NodeJS appears to be installed!")
 		// ensure NPM is installed
 		// we don't care about the actual version tbh.
-		println("Checking if NPM is installed")
+		cmd.Println("Checking if NPM is installed")
 		npm, err := utilities.FindSystemCommandVersion("npm", false, "")
 		if err != nil {
 			panic(err)
 		}
 		if npm == "" {
-			println("NPM not installed. Aborting.")
-			println("Install NPM before running this command!")
+			cmd.Println("NPM not installed. Aborting.")
+			cmd.Println("Install NPM before running this command!")
 			return nil
 		}
-		println("NPM appears to be installed")
-		println("Checking for TypeScript installation")
+		cmd.Println("NPM appears to be installed")
+		cmd.Println("Checking for TypeScript installation")
 		tsc, err := utilities.FindSystemCommandVersion("tsc", true, "Version ")
 		if err != nil {
 			return err
 		}
 		if tsc == "" {
-			println("TypeScript not installed. Aborting.")
-			println("Install TypeScript before running this command!")
+			cmd.Println("TypeScript not installed. Aborting.")
+			cmd.Println("Install TypeScript before running this command!")
 			return nil
 		}
-		println("TypeScript appears to be installed")
+		cmd.Println("TypeScript appears to be installed")
 
 		// Turn Node version into a int!
 		versions := []int{}
@@ -100,30 +108,30 @@ var installFolderr = &cobra.Command{
 		// Check node version compatibility
 		// Future versions should use a Matrix included with the repository.
 		// like say the engines field in the package.json
-		println("Checking Node version for support & compatibility")
+		cmd.Println("Checking Node version for support & compatibility")
 		if 16 >= versions[0] && versions[0] <= 18 {
-			println("Supported")
+			cmd.Println("Supported")
 		} else if versions[0] <= 16 {
-			println("Your Node Version is too old!")
-			println("Update your Node version before running this command!")
+			cmd.Println("Your Node Version is too old!")
+			cmd.Println("Update your Node version before running this command!")
 			return nil
 		} else if versions[0] >= 20 {
-			println("We're not sure Folderr will work with this new of a version of Node")
+			cmd.Println("We're not sure Folderr will work with this new of a version of Node")
 		} else if versions[0] >= 18 {
-			println("Your Node version is not tested but should work")
+			cmd.Println("Your Node version is not tested but should work")
 		}
 
 		// Check install folder for Folderr repository
 		repo, err := git.PlainOpen(config.Directory)
 		if err != nil && !strings.Contains(err.Error(), "repository does not exist") {
-			println("An error occurred while checking if the repository already exists")
-			println("Error:", err)
+			cmd.Println("An error occurred while checking if the repository already exists")
+			cmd.Println("Error:", err)
 			panic(err)
 		}
 		// If the repo exists, consider Folderr installed.
 		// If in dry-run mode we can ignore this, as no changes occur.
 		if repo != nil && !dry {
-			println("Found repository, Folderr is installed.")
+			cmd.Println("Found repository, Folderr is installed.")
 			os.Exit(1)
 		}
 
@@ -138,40 +146,40 @@ var installFolderr = &cobra.Command{
 			}
 		}
 
-		println("Cloning repository...")
+		cmd.Println("Cloning repository...")
 		repo, err = cloneFolderr(config, gitOptions, dry)
 		if err != nil {
 			if errors.Is(err, git.ErrRepositoryNotExists) {
-				println("That repository doesn't exist")
+				cmd.Println("That repository doesn't exist")
 				os.Exit(1)
 			} else if strings.Contains(err.Error(), "authorization") || strings.Contains(err.Error(), "authentication") {
-				println("Authentication required. Please pass either the authorization flag or set the " + utilities.Constants.EnvPrefix + "TOKEN environment variable.\n" +
+				cmd.Println("Authentication required. Please pass either the authorization flag or set the " + utilities.Constants.EnvPrefix + "TOKEN environment variable.\n" +
 					"See \"" + utilities.Constants.RootCmdName + " install --help\" for more info")
 				os.Exit(1)
 			} else {
-				println("An Error Occurred while cloning the repository. Error:", err)
+				cmd.Println("An Error Occurred while cloning the repository. Error:", err)
 				panic(err)
 			}
 		}
 		if repo == nil {
-			println("Cannot find the repository for some reason (Not Found).")
+			cmd.Println("Cannot find the repository for some reason (Not Found).")
 			os.Exit(1)
 		}
 
 		// Get tags to checkout
 		tags, err := repo.Tags()
 		if err != nil {
-			println("An error occurred while fetching the repository. Error:", err)
+			cmd.Println("An error occurred while fetching the repository. Error:", err)
 		}
 		highestVer, highest, err := newDetermineHighestVersion(tags)
 		// Determine if tag or commit based releases should be used.
 		if err != nil {
-			println("An error occurred while determining the highest tag:", err)
+			cmd.Println("An error occurred while determining the highest tag:", err)
 		}
 		var releaseType string
 		if highestVer == nil {
-			println("Not using Tags for updating...")
-			println("Reason: Latest tag is too old. (Pre V2)")
+			cmd.Println("Not using Tags for updating...")
+			cmd.Println("Reason: Latest tag is too old. (Pre V2)")
 			viper.Set("releaseType", "commit")
 		} else {
 			releaseType = "tag"
@@ -181,37 +189,37 @@ var installFolderr = &cobra.Command{
 		if !dry {
 			err = viper.WriteConfig()
 			if err != nil {
-				println("Error Occurred while writing config:", err)
+				cmd.Println("Error Occurred while writing config:", err)
 				panic(err)
 			}
 		}
-		println("Clone successful")
+		cmd.Println("Clone successful")
 
 		// Get the work tree
 		tree, err := repo.Worktree()
 		if err != nil {
-			println("error Occurred while getting Work Tree:", err)
+			cmd.Println("error Occurred while getting Work Tree:", err)
 			panic(err)
 		}
 		// Check out the CORRECT release type
 		if releaseType == "tag" {
-			println("Checking out tag", highest.Name().Short())
+			cmd.Println("Checking out tag", highest.Name().Short())
 			err = tree.Checkout(&git.CheckoutOptions{
 				Hash: highest.Hash(),
 			})
 			if err != nil {
-				println("Failed to check out tag", highest.Name().Short(), "with error:", err)
+				cmd.Println("Failed to check out tag", highest.Name().Short(), "with error:", err)
 				panic(err)
 			}
-			println("Checked out tag", highest.Name().Short())
+			cmd.Println("Checked out tag", highest.Name().Short())
 		} else {
 			if err != nil {
-				println("Error while reading the work tree:", err)
+				cmd.Println("Error while reading the work tree:", err)
 				panic(err)
 			}
 			branches, err := repo.Branches()
 			if err != nil {
-				println("Error while loading branches", err)
+				cmd.Println("Error while loading branches", err)
 			}
 			var branch *plumbing.Reference
 			branches.ForEach(func(r *plumbing.Reference) error {
@@ -225,16 +233,16 @@ var installFolderr = &cobra.Command{
 				return nil
 			})
 			if branch == nil {
-				println("FATAL: Suitable Branch Not Found")
+				cmd.Println("FATAL: Suitable Branch Not Found")
 				os.Exit(1)
 			}
 			err = tree.Checkout(&git.CheckoutOptions{Branch: branch.Name()})
 			if err != nil {
-				println("Error while checking out branch", branch.Name().Short()+",", "error:", err)
+				cmd.Println("Error while checking out branch", branch.Name().Short()+",", "error:", err)
 				panic(err)
 			}
 		}
-		println("Checkout successful")
+		cmd.Println("Checkout successful")
 
 		// REMOVE AFTER TESTING
 		// IMPL: install dependencies...
@@ -244,7 +252,7 @@ var installFolderr = &cobra.Command{
 		}
 		err = os.Chdir(config.Directory)
 		if errors.Is(err, fs.ErrPermission) {
-			println("Cannot access directory \"" + config.Directory + "\".\nDo I have permission to access that?\nIs that a directory?\nIs it executable (linux only)?")
+			cmd.Println("Cannot access directory \"" + config.Directory + "\".\nDo I have permission to access that?\nIs that a directory?\nIs it executable (linux only)?")
 		} else if err != nil {
 			panic(err)
 		}
@@ -271,11 +279,11 @@ var installFolderr = &cobra.Command{
 			return err
 		}
 		// remove after dev
-		println("Output from npm", strings.Join(args, " "))
-		println(string(output))
+		cmd.Println("Output from npm", strings.Join(args, " "))
+		cmd.Println(string(output))
 		os.Chdir(cwd)
-		println("Install seems to have gone correctly.")
-		fmt.Printf(`To build Folderr go to "%v" and type "npm run build:production"`, config.Directory)
+		cmd.Println("Install seems to have gone correctly.")
+		cmd.Printf(`To build Folderr go to "%v" and type "npm run build:production"`, config.Directory)
 
 		return nil
 	},
