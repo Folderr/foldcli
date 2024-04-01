@@ -137,7 +137,7 @@ func ReadConfig(directory string, dry bool) (*viper.Viper, Config, SecretConfig,
 		} else {
 			config.Repository = "https://github.com/Folderr/Docs"
 		}
-		if dbUrl := os.Getenv("DB_URI"); dbUrl != "" {
+		if dbUrl := os.Getenv(Constants.EnvPrefix + "DB_URI"); dbUrl != "" {
 			config.Database.Url = dbUrl
 			v.Set("db.url", config.Database.Url)
 		}

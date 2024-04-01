@@ -12,7 +12,7 @@ import (
 func TestSetupDb(t *testing.T) {
 	// set DB_URI before running this test
 	os.Setenv(utilities.Constants.EnvPrefix+"DB_NAME", "foldcli-db-testing")
-	if os.Getenv("DB_URI") == "" {
+	if os.Getenv(utilities.Constants.EnvPrefix+"DB_URI") == "" {
 		t.Skip("No DB_URI environment variable provided. No DB operations available")
 	}
 	actual := &bytes.Buffer{}
@@ -38,7 +38,7 @@ func TestSetupDb(t *testing.T) {
 func TestSetupDbPresetup(t *testing.T) {
 	// set DB_URI before running this test
 	os.Setenv(utilities.Constants.EnvPrefix+"DB_NAME", "foldcli-db-testing")
-	if os.Getenv("DB_URI") == "" {
+	if os.Getenv(utilities.Constants.EnvPrefix+"DB_URI") == "" {
 		t.Skip("No DB_URI environment variable provided. No DB operations available")
 	}
 	actual := &bytes.Buffer{}
@@ -61,7 +61,7 @@ func TestSetupDbPresetup(t *testing.T) {
 func TestSetupDbCleanup(t *testing.T) {
 	// set DB_URI before running this test
 	os.Setenv(utilities.Constants.EnvPrefix+"DB_NAME", "foldcli-db-testing")
-	if os.Getenv("DB_URI") == "" {
+	if os.Getenv(utilities.Constants.EnvPrefix+"DB_URI") == "" {
 		t.Skip("No DB_URI environment variable provided. No DB operations available")
 	}
 	configDir, err := utilities.GetConfigDir(dry)

@@ -28,10 +28,11 @@ jobs:
       - name: Install dependencies
         run: go get .
       - name: Test with Go & Output
-        run: go test ./cmd -json > TestResults-${{ matrix.go-version }}-${{ matrix.os }}-${{ github.sha }}.json
+        run: go test ./cmd ./cmd/init ./cmd/install -json > TestResults-${{ matrix.go-version }}-${{ matrix.os }}-${{ github.sha }}.json
         env:
           test: true
-          MONGO_URI: ${{ secrets.MONGO_URI }}
+          DB_URI: ${{ secrets.MONGO_URI }}
+          FOLDCLI_DB_NAME: foldcli-testing
       - name: Upload Go test results
         uses: actions/upload-artifact@v3
         if: always()
