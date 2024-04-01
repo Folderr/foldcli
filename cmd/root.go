@@ -14,7 +14,6 @@ import (
 var dry bool
 
 var rootCmdName = utilities.Constants.RootCmdName
-var envPrefix = utilities.Constants.EnvPrefix
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -33,6 +32,9 @@ var RootCmd = &cobra.Command{
 			panic(err)
 		}
 		_, config, _, err := utilities.ReadConfig(dir, dry)
+		if err != nil {
+			panic(err)
+		}
 		if dry && strings.Contains(config.Directory, os.TempDir()) {
 			// Remove the temp dir
 			err := os.RemoveAll(config.Directory)
