@@ -262,7 +262,6 @@ Interactivity happens when you do not provide the listed arguments (excluding fl
 		if err != nil {
 			return err
 		}
-		fmt.Print(dir)
 		vip, config, _, err := utilities.ReadConfig(dir, dry)
 		if err != nil {
 			panic(err)
