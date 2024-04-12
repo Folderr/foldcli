@@ -26,7 +26,7 @@ func init() {
 	initCmd.AddCommand(folderrCmd)
 }
 
-func interactiveDirectory(config utilities.Config) (bool, error) {
+func interactiveDirectory(vip *viper.Viper, config utilities.Config) (bool, error) {
 	if config.Directory != "" && !override {
 		return true, nil
 	}
@@ -69,12 +69,12 @@ func interactiveDirectory(config utilities.Config) (bool, error) {
 			}
 		}
 		println("Setting directory to be...", result)
-		viper.Set("directory", result)
+		vip.Set("directory", result)
 	}
 	if dry {
 		return true, nil
 	}
-	err = viper.WriteConfig()
+	err = vip.WriteConfig()
 	if err != nil {
 		return false, err
 	}
@@ -84,7 +84,7 @@ func interactiveDirectory(config utilities.Config) (bool, error) {
 // CANNOT TEST
 // COBRA DOES NOT SUPPLY io.ReadCloser or io.WriteCloser
 // COBRA SUPPLIES io.Reader and io.Writer
-func interactiveRepository(config utilities.Config) (bool, error) {
+func interactiveRepository(vip *viper.Viper, config utilities.Config) (bool, error) {
 	if config.Repository != "" && !override {
 		return true, nil
 	}
@@ -158,8 +158,8 @@ func interactiveRepository(config utilities.Config) (bool, error) {
 	if dry {
 		return true, nil
 	}
-	viper.Set("repository", inputUrl)
-	err = viper.WriteConfig()
+	vip.Set("repository", inputUrl)
+	err = vip.WriteConfig()
 	if err != nil {
 		return false, err
 	}
@@ -168,7 +168,7 @@ func interactiveRepository(config utilities.Config) (bool, error) {
 
 // Functions based on args instead of interactive
 // CAN TEST
-func dirStatic(config utilities.Config, args []string) (bool, error) {
+func dirStatic(vip *viper.Viper, config utilities.Config, args []string) (bool, error) {
 	if config.Directory != "" && !override {
 		return true, nil
 	}
@@ -189,18 +189,18 @@ func dirStatic(config utilities.Config, args []string) (bool, error) {
 		}
 	}
 	println("Setting directory to be", ldir)
-	viper.Set("directory", ldir)
+	vip.Set("directory", ldir)
 	if dry {
 		return true, nil
 	}
-	err := viper.WriteConfig()
+	err := vip.WriteConfig()
 	if err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
-func repositoryStatic(config utilities.Config, args []string) (bool, error) {
+func repositoryStatic(vip *viper.Viper, config utilities.Config, args []string) (bool, error) {
 	if config.Repository != "" && !override {
 		return true, nil
 	}
@@ -237,12 +237,12 @@ func repositoryStatic(config utilities.Config, args []string) (bool, error) {
 	if repo == nil {
 		return false, nil
 	}
-	viper.Set("repository", args[1])
+	vip.Set("repository", args[1])
 	println("Setting repository to be", args[1])
 	if dry {
 		return true, nil
 	}
-	err = viper.WriteConfig()
+	err = vip.WriteConfig()
 	if err != nil {
 		println(err)
 		return false, nil
@@ -262,17 +262,18 @@ Interactivity happens when you do not provide the listed arguments (excluding fl
 		if err != nil {
 			return err
 		}
-		_, config, _, err := utilities.ReadConfig(dir, dry)
+		fmt.Print(dir)
+		vip, config, _, err := utilities.ReadConfig(dir, dry)
 		if err != nil {
 			panic(err)
 		}
 		var fails []string
 		noFail := true
 		if len(args) == 0 {
-			noFail, err = interactiveDirectory(config)
+			noFail, err = interactiveDirectory(vip, config)
 		}
 		if len(args) > 0 {
-			noFail, err = dirStatic(config, args)
+			noFail, err = dirStatic(vip, config, args)
 		}
 		if err != nil {
 			panic(err)
@@ -281,10 +282,10 @@ Interactivity happens when you do not provide the listed arguments (excluding fl
 			fails = append(fails, "directory")
 		}
 		if len(args) < 2 || strings.Contains(args[1], "--") {
-			noFail, err = interactiveRepository(config)
+			noFail, err = interactiveRepository(vip, config)
 		}
 		if len(args) > 1 && !strings.Contains(args[1], "--") {
-			noFail, err = repositoryStatic(config, args)
+			noFail, err = repositoryStatic(vip, config, args)
 		}
 		if err != nil {
 			panic(err)
