@@ -42,9 +42,8 @@ var installFolderr = &cobra.Command{
 	Long:  `Checks for Folderrs dependencies and installs Folderr`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var config utilities.Config
-		fmt.Printf("%+v", sharedConfig)
 		if sharedConfig.Directory != "" {
-			fmt.Println("Hi!")
+			fmt.Println("Shared config directory not found")
 			config = sharedConfig
 		} else {
 			dir, err := utilities.GetConfigDir(dry)
