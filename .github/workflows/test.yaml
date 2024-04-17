@@ -1,4 +1,4 @@
-name: Upload Go test results
+name: Test & Upload Results
 
 on: [push, pull_request]
 
