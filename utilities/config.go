@@ -34,7 +34,7 @@ func GetGitToken() string {
 
 func GetConfigDir(dry bool) (string, error) {
 	dir, err := os.UserHomeDir()
-	if dry {
+	if dry && os.Getenv(Constants.EnvPrefix+"DEBUG") == "true" {
 		fmt.Println("Using dry-run mode")
 	}
 	if err != nil && dry {
