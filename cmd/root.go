@@ -21,7 +21,7 @@ var RootCmd = &cobra.Command{
 	Short: "A CLI to manage Folderr installations",
 	Long: `A CLI to setup and manage your Folderr instance. Get started with:
 ` + rootCmdName + ` init`,
-	Version: "0.0.10",
+	Version: "0.0.11",
 	CompletionOptions: cobra.CompletionOptions{
 		DisableDefaultCmd: true,
 	},
@@ -65,7 +65,7 @@ func Execute() {
 
 func init() {
 	// rootCmd.PersistentFlags().BoolVar(&dry, "dry", false, "Runs the command but does not change ANYTHING")
-	RootCmd.SetVersionTemplate("Folderr CLI Version: {{ .Version }}\n")
+	RootCmd.SetVersionTemplate("Folderr CLI (foldcli) version: {{ .Version }}\n")
 	RootCmd.PersistentFlags().BoolVar(&dry, "dry", false, "Runs the command but does not change anything")
 	RootCmd.ParseFlags(os.Args)
 	// Here you will define your flags and configuration settings.
