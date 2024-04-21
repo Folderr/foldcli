@@ -31,7 +31,7 @@ jobs:
         run: go test ./cmd ./cmd/init ./cmd/install -json > TestResults-${{ matrix.go-version }}-${{ matrix.os }}-${{ github.sha }}.json
         env:
           test: true
-          DB_URI: ${{ secrets.MONGO_URI }}
+          FOLDCLI_MONGO_URI: ${{ secrets.FOLDCLI_MONGO_URI }}
           FOLDCLI_DB_NAME: foldcli-testing
       - name: Upload Go test results
         uses: actions/upload-artifact@v3
