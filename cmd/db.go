@@ -166,9 +166,9 @@ Run with test env var for automatic cleanup of files and database entries`)
 			return err
 		}
 		if verbose {
-			cmd.Println("Saved public key to", save_dir+"/publicJWT.pem", "in case anything goes wrong")
+			cmd.Print("Saved public key to", save_dir+"/publicJWT.pem", "in case anything goes wrong\n\n")
 		}
-		cmd.Println("\nThe keys were saved in ", save_dir, "under 'privateJWT.pem' and 'publicJWT.pem'")
+		cmd.Println("The keys were saved in", save_dir, "under 'privateJWT.pem' and 'publicJWT.pem'")
 		err = saveKeyToFolderr(save_dir, config, privatePem)
 		if err != nil {
 			cmd.Println(err.Error())
