@@ -13,10 +13,14 @@ import (
 func TestInstall(t *testing.T) {
 	os.Setenv("test", "true")
 	dir, err := utilities.GetConfigDir(true)
+	// this is broken. will fix later
+	// os.Setenv(utilities.Constants.EnvPrefix+"CFG_TEMPDIR", dir)
 	if err != nil {
 		t.Fatal("Failed due to error", err)
 	}
 	_, sharedConfig, _, err = utilities.ReadConfig(dir, true)
+	os.Setenv(utilities.Constants.EnvPrefix+"CFG_TEMPDIR", dir)
+	os.Setenv(utilities.Constants.EnvPrefix+"FLDRR_TEMPDIR", sharedConfig.Directory)
 	if err != nil {
 		t.Fatal("Failed due to error", err)
 	}
@@ -47,4 +51,26 @@ func TestInstall(t *testing.T) {
 			)
 		}
 	}
+
+	t.Cleanup(func() {
+		cfgTemp := os.Getenv(utilities.Constants.EnvPrefix + "CFG_TEMPDIR")
+		fldrrTemp := os.Getenv(utilities.Constants.EnvPrefix + "FLDRR_TEMPDIR")
+
+		if cfgTemp != "" {
+			err := os.RemoveAll(cfgTemp)
+			if err != nil {
+				t.Logf("Ran into error when removing config directories: %v", err.Error())
+			}
+		}
+		err = os.RemoveAll(fldrrTemp)
+		if err != nil {
+			t.Logf("Ran into error when removing folderr directories: %v", err.Error())
+		}
+		err = os.RemoveAll(dir)
+		if err != nil {
+			t.Logf("Ran into error when removing folderr directories: %v", err.Error())
+		}
+		os.Unsetenv(utilities.Constants.EnvPrefix + "FLDRR_TEMPDIR")
+		os.Unsetenv(utilities.Constants.EnvPrefix + "CFG_TEMPDIR")
+	})
 }

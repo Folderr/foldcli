@@ -132,6 +132,20 @@ func TestSetupDbCleanup(t *testing.T) {
 	if !strings.Contains(actual.String(), "Cleaned up") {
 		t.Error("Seems cleanup was useless. Why?")
 	}
-	os.Unsetenv(utilities.Constants.EnvPrefix + "FLDRR_TEMPDIR")
-	os.Unsetenv(utilities.Constants.EnvPrefix + "CFG_TEMPDIR")
+
+	t.Cleanup(func() {
+		cfgTemp := os.Getenv(utilities.Constants.EnvPrefix + "CFG_TEMPDIR")
+		fldrrTemp := os.Getenv(utilities.Constants.EnvPrefix + "FLDRR_TEMPDIR")
+
+		err := os.RemoveAll(cfgTemp)
+		if err != nil {
+			t.Logf("Ran into error when removing config directories: %v", err.Error())
+		}
+		err = os.RemoveAll(fldrrTemp)
+		if err != nil {
+			t.Logf("Ran into error when removing folderr directories: %v", err.Error())
+		}
+		os.Unsetenv(utilities.Constants.EnvPrefix + "FLDRR_TEMPDIR")
+		os.Unsetenv(utilities.Constants.EnvPrefix + "CFG_TEMPDIR")
+	})
 }

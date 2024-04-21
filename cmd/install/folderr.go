@@ -6,6 +6,7 @@ package install
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"strconv"
@@ -21,9 +22,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-func cloneFolderr(config utilities.Config, options *git.CloneOptions, dry bool) (*git.Repository, error) {
+func cloneFolderr(w io.Writer, config utilities.Config, options *git.CloneOptions, dry bool) (*git.Repository, error) {
 	if dry {
-		fmt.Printf("Cloning in directory %v for dry-run mode\n", config.Directory)
+		fmt.Fprintf(w, "Cloning in directory %v for dry-run mode\n", config.Directory)
 		repo, err := git.PlainClone(config.Directory, false, options)
 		return repo, err
 	}
@@ -43,7 +44,7 @@ var installFolderr = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var config utilities.Config
 		if sharedConfig.Directory != "" {
-			fmt.Println("Shared config directory not found")
+			cmd.Println("Shared config directory not found")
 			config = sharedConfig
 		} else {
 			dir, err := utilities.GetConfigDir(dry)
@@ -60,7 +61,7 @@ var installFolderr = &cobra.Command{
 			return nil
 		}
 		cmd.Println("Checking if NodeJS is installed")
-		out, err := utilities.FindSystemCommandVersion("node", true, "v")
+		out, err := utilities.FindSystemCommandVersion(cmd.OutOrStdout(), "node", true, "v")
 		if err != nil {
 			return err
 		}
@@ -73,7 +74,7 @@ var installFolderr = &cobra.Command{
 		// ensure NPM is installed
 		// we don't care about the actual version tbh.
 		cmd.Println("Checking if NPM is installed")
-		npm, err := utilities.FindSystemCommandVersion("npm", false, "")
+		npm, err := utilities.FindSystemCommandVersion(cmd.OutOrStdout(), "npm", false, "")
 		if err != nil {
 			panic(err)
 		}
@@ -84,7 +85,7 @@ var installFolderr = &cobra.Command{
 		}
 		cmd.Println("NPM appears to be installed")
 		cmd.Println("Checking for TypeScript installation")
-		tsc, err := utilities.FindSystemCommandVersion("tsc", true, "Version ")
+		tsc, err := utilities.FindSystemCommandVersion(cmd.OutOrStdout(), "tsc", true, "Version ")
 		if err != nil {
 			return err
 		}
@@ -146,7 +147,7 @@ var installFolderr = &cobra.Command{
 		}
 
 		cmd.Println("Cloning repository...")
-		repo, err = cloneFolderr(config, gitOptions, dry)
+		repo, err = cloneFolderr(cmd.OutOrStdout(), config, gitOptions, dry)
 		if err != nil {
 			if errors.Is(err, git.ErrRepositoryNotExists) {
 				cmd.Println("That repository doesn't exist")
@@ -265,7 +266,7 @@ var installFolderr = &cobra.Command{
 		if config.Repository == "https://github.com/Folderr/Folderr" && os.Getenv("test") != "true" {
 			args = append(args, "--ignore scripts")
 		}
-		npmCmd, err := utilities.FindSystemCommand("npm", args)
+		npmCmd, err := utilities.FindSystemCommand(cmd.OutOrStdout(), "npm", args)
 		if err != nil {
 			panic(err)
 		}
