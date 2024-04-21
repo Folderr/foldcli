@@ -12,12 +12,17 @@ foldcli is a application written in `go` and expects `go` version `1.20` or late
 Commands tested on Linux (Ubuntu):
 
 - `foldcli`
-- `foldcli init`
-- `foldcli install`
+- `foldcli init folderr`
+- `foldcli install folderr`
+- `foldcli setup db`
 
 ## Installation
 
-Not supported yet. Must build instead.
+Most up to date version will be from [building from source](#building-source-code-into-a-binary)
+
+1. Grab from latest tag
+2. Add to path
+3. Reload any terminal you wish to use on.
 
 ## Building source code into a binary
 
@@ -39,11 +44,12 @@ go build .
 
 Place into your PATH
 
-Find path in your terminal
+(Find path in your terminal)
 
 ```sh
 $PATH
 # Usually /usr/bin, /usr/share/bin, or /usr/local/bin for linux
+# Alternatively for linux: $HOME/.local/bin
 ```
 
 ## Usage
