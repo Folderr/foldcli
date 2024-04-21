@@ -6,8 +6,12 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/Folderr/foldcli/utilities"
@@ -32,7 +36,8 @@ path is where the keys get saved. Default: $HOME/.folderr/cli/
 
 NOTES:
 Does not have dry-run mode. Cannot accurately test with a dry run mode.
-Test with "test" env variable. Do not use production database name/url when testing.`,
+Test with "test" env variable. Do not use production database name/url when testing.
+REQUIRES Folderr to be installed`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dir, err := utilities.GetConfigDir(dry)
 		if err != nil {
@@ -47,10 +52,34 @@ Test with "test" env variable. Do not use production database name/url when test
 			return fmt.Errorf(`command \"` + rootCmdName + ` setup db\" does not have dry-run mode
 Run with test env var for automatic cleanup of files and database entries`)
 		}
-		if len(args) < 1 {
-			return fmt.Errorf("provide db-name argument. \"db-name\" is the name of the database you'll use for your Folderr install")
+
+		checkInit := utilities.CheckInitialization(&config)
+		if !checkInit.Folderr {
+			cmd.Println("Run \"" + utilities.Constants.RootCmdName + " init folderr\" before running this command. thanks")
+			return nil
 		}
-		save_dir := dir
+
+		isFolderrInstalled, err := utilities.IsFolderrInstalled(config.Directory)
+		if err != nil {
+			return err
+		}
+		if !isFolderrInstalled {
+			cmd.Println("Please install Folderr. Here's a command to do so.")
+			return nil
+		}
+		uri := os.Getenv(utilities.Constants.EnvPrefix + "MONGO_URI")
+		if (config.Database.Url == "" && uri != "") || config.Database.DbName == "" {
+			cmd.Println("run \"" + utilities.Constants.RootCmdName + " init db\" before this command. thanks")
+			initDbCmd, _, err := cmd.Root().Find([]string{"init db"})
+			if err != nil {
+				return err
+			}
+			return initDbCmd.Help()
+		}
+		if uri == "" {
+			uri = config.Database.Url
+		}
+		save_dir := filepath.Join(dir, "/keys")
 		if len(args) >= 1 {
 			save_dir = args[0]
 		} else {
@@ -58,9 +87,13 @@ Run with test env var for automatic cleanup of files and database entries`)
 				cmd.Println("Using default config dir", save_dir, "to save keys in")
 			}
 		}
-		uri := os.Getenv("MONGO_URI")
-		if config.Database.Url == "" || config.Database.DbName == "" {
-			return fmt.Errorf("run \"" + utilities.Constants.RootCmdName + " init db\" before this command. thanks")
+
+		if _, err = os.Stat(save_dir); err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				os.MkdirAll(save_dir, 0700)
+			} else {
+				return err
+			}
 		}
 
 		client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
@@ -75,7 +108,7 @@ Run with test env var for automatic cleanup of files and database entries`)
 		}()
 
 		if os.Getenv("test") == "true" && !noCleanup {
-			defer cleanupFolderrDbCmd(config, args[0], save_dir)
+			defer cleanupFolderrDbCmd(cmd.OutOrStdout(), config, args[0], save_dir)
 		}
 
 		db := client.Database(config.Database.DbName)
@@ -135,37 +168,99 @@ Run with test env var for automatic cleanup of files and database entries`)
 		if verbose {
 			cmd.Println("Saved public key to", save_dir+"/publicJWT.pem", "in case anything goes wrong")
 		}
+		cmd.Println("\nThe keys were saved in ", save_dir, "under 'privateJWT.pem' and 'publicJWT.pem'")
+		err = saveKeyToFolderr(save_dir, config, privatePem)
+		if err != nil {
+			cmd.Println(err.Error())
+		} else {
+			cmd.Println("Installed key to Folderr")
+		}
 		FolderrDbInsertedId, err = coll.InsertOne(context.TODO(), bson.D{
 			{Key: "bans", Value: []string{}},
 			{Key: "publicKeyJWT", Value: publicPem},
 		})
 		if err != nil {
 			panic(err)
+		} else {
+			cmd.Println("Saved public key to database")
 		}
 
 		// formattedKey := string(privatePem)
 		// println(strings.TrimSpace(formattedKey))
-		cmd.Println("The key was saved in ", save_dir, "under 'privateJWT.pem'")
-		cmd.Println("If this is not the location of your Folderr installation, please follow the directions below.")
-		cmd.Println("Please put this private key in your Folderr installs directory under 'internal/keys/privateJWT' and modify the 'internal/locations.json' file to be...")
-		// TODO: Set up a way to do this for the user.
-		fileContent, err := json.MarshalIndent(`{ keys: "internal", keysConfigured: true }`, "", "	")
-		if err != nil {
-			cmd.Println(`{"keys": "internal", "keysConfigured": true}`)
-		} else {
-			cmd.Println(string(fileContent))
-		}
 		return nil
 	},
 }
 
-func cleanupFolderrDbCmd(config utilities.Config, dbName, path string) {
+type locationJSON struct {
+	Keys          string `json:"keys"`
+	KeyConfigured bool   `json:"keyConfigured"`
+}
+
+func saveKeyToFolderr(save_dir string, config utilities.Config, privateKey []byte) error {
+	dir := filepath.Join(config.Directory, "internal/keys")
+	privatePath := filepath.Join(dir, "privateJWT.pem")
+	_, err := os.Stat(filepath.Join(config.Directory, "internal/keys"))
+	locationsPath := filepath.Join(config.Directory, "internal/locations.json")
+	example := "{\"keys\": \"internal\", \"keyConfigured\": true}"
+	if err != nil {
+		return fmt.Errorf(
+			`failed to write the private key to Folderr, you need to copy it from "%v" to "%v".
+			You also need to write %v to "%v"
+			Original error: %w`,
+			privatePath,
+			save_dir,
+			example,
+			locationsPath,
+			err,
+		)
+	}
+	err = os.WriteFile(privatePath, privateKey, 0600)
+	if err != nil {
+		return fmt.Errorf(
+			`failed to write the private key to Folderr, you need to copy it from "%v" to "%v".
+			You also need to write %v to "%v"
+			Original error: %w`,
+			privatePath,
+			save_dir,
+			example,
+			locationsPath,
+			err,
+		)
+	}
+
+	contents := locationJSON{Keys: "internal", KeyConfigured: true}
+
+	marshal, err := json.Marshal(contents)
+
+	if err != nil {
+		return fmt.Errorf(
+			"failed to write \"%v\". You must do it yourself\nIt should look like %v\nOriginal error: %w",
+			locationsPath,
+			example,
+			err,
+		)
+	}
+
+	err = os.WriteFile(locationsPath, marshal, 0600)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to write \"%v\". You must do it yourself\nIt should look like %v\nOriginal error: %w",
+			locationsPath,
+			example,
+			err,
+		)
+	}
+	return nil
+}
+
+func cleanupFolderrDbCmd(w io.Writer, config utilities.Config, dbName, path string) {
 	// make a new database connection
 	uri := config.Database.Url
+	fmt.Fprintln(w, path)
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
-		println("Cleanup failed. See panic.")
+		println("DB Connection failed. See panic.")
 		panic(err)
 	}
 
@@ -182,40 +277,69 @@ func cleanupFolderrDbCmd(config utilities.Config, dbName, path string) {
 		coll := client.Database(dbName).Collection("folderrs")
 		_, err = coll.DeleteOne(context.TODO(), bson.D{{Key: "_id", Value: FolderrDbInsertedId.InsertedID}})
 		if err != nil {
-			fmt.Println("Error occured while cleaning up DB, see below")
-			panic(err)
+			fmt.Fprintf(w, "Error occured while cleaning up DB, see below\n%v\n", err.Error())
+		} else {
+			cleaned = append(cleaned, "database")
 		}
-		cleaned = append(cleaned, "database")
 	}
 
 	// remove files now, thanks
-	_, err = os.Stat(path + "/publicJWT.pem")
-	if err != nil && !os.IsNotExist(err) {
-		panic(err)
-	} else if !os.IsNotExist(err) {
-		err = os.Remove(path + "/publicJWT.pem")
+	_, err = os.Stat(filepath.Join(path + "/publicJWT.pem"))
+	if err != nil {
+		fmt.Fprintf(w, "Couldn't remove the public key\n%v\n", err.Error())
+	} else {
+		err = os.Remove(filepath.Join(path + "/publicJWT.pem"))
 		if err != nil {
-			println("Error occured while cleaning up public key, see below")
-			panic(err)
+			fmt.Fprintf(w, "Error occured while cleaning up public key, see below\n%v\n", err.Error())
+		} else {
+			cleaned = append(cleaned, "public key")
 		}
-		cleaned = append(cleaned, "public key")
 	}
 
 	// remove files now, thanks
-	_, err = os.Stat(path + "/privateJWT.pem")
-	if err != nil && !os.IsNotExist(err) {
-		panic(err)
-	} else if !os.IsNotExist(err) {
-		err = os.Remove(path + "/privateJWT.pem")
+	_, err = os.Stat(filepath.Join(path, "/privateJWT.pem"))
+	if err != nil {
+		fmt.Fprintf(w, "Couldn't remove the private key\n%v\n", err.Error())
+	} else {
+		err = os.Remove(filepath.Join(path, "/privateJWT.pem"))
 		if err != nil {
-			println("Error occured while cleaning up private key, see below")
-			panic(err)
+			fmt.Fprintf(w, "Error occured while cleaning up private key, see below\n%v\n", err.Error())
+		} else {
+			cleaned = append(cleaned, "private key")
 		}
-		cleaned = append(cleaned, "private key")
+	}
+
+	_, err = os.Stat(filepath.Join(config.Directory, "internal/keys/privateJWT.pem"))
+	if err != nil {
+		fmt.Fprintf(w, "Couldn't remove the private key from Folderr, see below\n%v\n", err.Error())
+	} else {
+		err = os.Remove(filepath.Join(config.Directory, "internal/keys/privateJWT.pem"))
+		if err != nil {
+			fmt.Fprintf(w, "Error occured while cleaning up private key, see below\n%v\n", err.Error())
+		} else {
+			cleaned = append(cleaned, "Folderr / keys / private key")
+		}
+	}
+
+	_, err = os.Stat(filepath.Join(config.Directory, "internal/locations.json"))
+	if err != nil {
+		fmt.Fprintf(w, "Couldn't reset the locations.json from Folderr, see below\n%v\n", err.Error())
+	} else {
+		marshal, err := json.Marshal(locationJSON{Keys: "internal", KeyConfigured: false})
+		if err != nil {
+			fmt.Fprintf(w, "340: Error occured while cleaning up locations.json, see below\n%v\n", err.Error())
+		} else {
+			err = os.WriteFile(filepath.Join(config.Directory, "internal/locations.json"), marshal, 0600)
+			if err != nil {
+				fmt.Fprintf(w, "347: Error occured while cleaning up locations.json, see below\n%v\n", err.Error())
+			} else {
+				cleaned = append(cleaned, "Folderr / keys / locations.json")
+			}
+		}
 	}
 
 	if verbose {
-		println("Cleaned up", strings.Join(cleaned, ", "))
+		fmt.Fprintln(w, "Cleaned up", strings.Join(cleaned, ", "))
 	}
 }
 
