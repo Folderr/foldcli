@@ -258,7 +258,7 @@ func cleanupFolderrDbCmd(w io.Writer, config utilities.Config, dbName, path stri
 	uri := config.Database.Url
 	fmt.Fprintln(w, path)
 
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri).SetAppName("Folderr CLI"))
 	if err != nil {
 		println("DB Connection failed. See panic.")
 		panic(err)

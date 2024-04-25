@@ -107,7 +107,7 @@ If you believe this to be a bug please submit an issue at https://github.com/Fol
 			os.Exit(1)
 		}
 
-		client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+		client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri).SetAppName("Folderr CLI"))
 		if err != nil {
 			panic(err)
 		}
