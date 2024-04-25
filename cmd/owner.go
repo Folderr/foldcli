@@ -53,11 +53,10 @@ type UserPrivacy struct {
 
 // ownerCmd represents the owner command
 var ownerCmd = &cobra.Command{
-	Use:   "owner [db_name]",
+	Use:   "owner",
 	Short: "Set up the owner for your Folderr instance",
 	Long: `Set's up the owner account on your Folderr instance
-Requires MONGO_URI environment variable to be set
-db_name is required for uploading the account`,
+Please run "` + utilities.Constants.RootCmdName + ` init db" before running this command`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// prechecks
 
@@ -119,7 +118,7 @@ If you believe this to be a bug please submit an issue at https://github.com/Fol
 			}
 		}()
 
-		coll := client.Database(args[0]).Collection("users")
+		coll := client.Database(config.Database.DbName).Collection("users")
 
 		var preUser User
 		coll.FindOne(context.TODO(), bson.D{
