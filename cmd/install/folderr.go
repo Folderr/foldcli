@@ -86,11 +86,11 @@ var installFolderr = &cobra.Command{
 		cmd.Println("NPM appears to be installed")
 		cmd.Println("Checking for TypeScript installation")
 		tsc, err := utilities.FindSystemCommandVersion(cmd.OutOrStdout(), "tsc", true, "Version ")
-		if err != nil && !strings.Contains(err.Error(), "Is tsc installed?") {
+		if err != nil && !strings.Contains(err.Error(), "executable file not found") {
 			return err
 		}
 		swc, err := utilities.FindSystemCommandVersion(cmd.OutOrStdout(), "swc", true, "@swc/cli: ")
-		if err != nil && !strings.Contains(err.Error(), "Is swc installed?") {
+		if err != nil && !strings.Contains(err.Error(), "executable file not found") {
 			return err
 		}
 		if tsc == "" && swc == "" {
