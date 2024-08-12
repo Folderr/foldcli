@@ -152,11 +152,7 @@ func ReadConfig(directory string, dry bool) (*viper.Viper, Config, SecretConfig,
 		config.Directory = ldir
 		v.Set("directory", config.Directory)
 
-		if GetGitToken() != "" {
-			config.Repository = "https://github.com/Folderr/Folderr"
-		} else {
-			config.Repository = "https://github.com/Folderr/Docs"
-		}
+		config.Repository = "https://github.com/Folderr/Folderr"
 		v.Set("repository", config.Repository)
 
 		if dbUrl := os.Getenv(Constants.EnvPrefix + "MONGO_URI"); dbUrl != "" {

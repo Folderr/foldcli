@@ -89,12 +89,16 @@ var installFolderr = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		if tsc == "" {
-			cmd.Println("TypeScript not installed. Aborting.")
-			cmd.Println("Install TypeScript before running this command!")
+		swc, err := utilities.FindSystemCommandVersion(cmd.OutOrStdout(), "swc", true, "@swc/cli: ")
+		if err != nil {
+			return err
+		}
+		if tsc == "" && swc == "" {
+			cmd.Println("Neither TypeScript nor SWC not installed. Aborting.")
+			cmd.Println("Install TypeScript or SWC before running this command!")
 			return nil
 		}
-		cmd.Println("TypeScript appears to be installed")
+		cmd.Println("TypeScript or SWC appears to be installed")
 
 		// Turn Node version into a int!
 		versions := []int{}
@@ -109,16 +113,14 @@ var installFolderr = &cobra.Command{
 		// Future versions should use a Matrix included with the repository.
 		// like say the engines field in the package.json
 		cmd.Println("Checking Node version for support & compatibility")
-		if 16 >= versions[0] && versions[0] <= 18 {
+		if 20 >= versions[0] && versions[0] <= 22 {
 			cmd.Println("Supported")
-		} else if versions[0] <= 16 {
+		} else if versions[0] <= 20 {
 			cmd.Println("Your Node Version is too old!")
 			cmd.Println("Update your Node version before running this command!")
 			return nil
 		} else if versions[0] >= 20 {
 			cmd.Println("We're not sure Folderr will work with this new of a version of Node")
-		} else if versions[0] >= 18 {
-			cmd.Println("Your Node version is not tested but should work")
 		}
 
 		// Check install folder for Folderr repository
@@ -263,9 +265,6 @@ var installFolderr = &cobra.Command{
 			// "--ignore-scripts"
 			args = append(args, "--dry-run")
 		}
-		if config.Repository == "https://github.com/Folderr/Folderr" && os.Getenv("test") != "true" {
-			args = append(args, "--ignore scripts")
-		}
 		npmCmd, err := utilities.FindSystemCommand(cmd.OutOrStdout(), "npm", args)
 		if err != nil {
 			panic(err)
@@ -283,7 +282,11 @@ var installFolderr = &cobra.Command{
 		cmd.Println(string(output))
 		os.Chdir(cwd)
 		cmd.Println("Install seems to have gone correctly.")
-		cmd.Printf(`To build Folderr go to "%v" and type "npm run build:production"`, config.Directory)
+		buildCmd := "npm run build"
+		if swc == "" {
+			buildCmd = "npm run build:tsc"
+		}
+		cmd.Printf(`To build Folderr go to "%v" and type "%v"`, config.Directory, buildCmd)
 
 		return nil
 	},
