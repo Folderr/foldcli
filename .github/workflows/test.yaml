@@ -1,4 +1,4 @@
-name: Test & Upload Results
+name: Test
 
 on: [push, pull_request]
 
@@ -12,10 +12,17 @@ jobs:
                 os: ["windows-latest", "ubuntu-latest"]
         runs-on: ${{matrix.os}}
         env:
-            SHA: ${GITHUB_SHA::8}
+            SHA: $(${{github.sha}}::8)
 
         steps:
+            - name: Set short git commit SHA
+              id: vars
+              run: |
+                  calculatedSha=$(git rev-parse --short ${{ github.sha }})
+                  echo "COMMIT_SHORT_SHA=$calculatedSha" >> $GITHUB_ENV
             - uses: actions/checkout@v3
+            - name: Check Short SHA
+              uses: echo '${{ env.SHA }}'
             - name: Setup Node
               uses: actions/setup-node@v3
               with:
