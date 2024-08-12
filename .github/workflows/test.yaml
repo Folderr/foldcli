@@ -11,18 +11,12 @@ jobs:
                 node-version: [20.x]
                 os: ["windows-latest", "ubuntu-latest"]
         runs-on: ${{matrix.os}}
-        env:
-            SHA: $(${{github.sha}}::8)
 
         steps:
             - uses: actions/checkout@v3
-            - name: Set short git commit SHA
-              id: vars
-              run: |
-                  calculatedSha=$(git rev-parse --short ${{ github.sha }})
-                  echo "COMMIT_SHORT_SHA=$calculatedSha" >> $GITHUB_ENV
-            - name: Check Short SHA
-              run: echo '${{ env.SHA }}'
+            - uses: benjlevesque/short-sha@v3.0
+              name: Set short git commit SHA
+              id: short-sha
             - name: Setup Node
               uses: actions/setup-node@v3
               with:
@@ -35,10 +29,8 @@ jobs:
                   go-version: ${{ matrix.go-version }}
             - name: Install dependencies
               run: go get .
-            - name: Make Short SHA
-              run: echo ${GITHUB_SHA::7}
             - name: Test with Go & Output
-              run: go test ./cmd ./cmd/init ./cmd/install -json > TestResults-${{ matrix.go-version }}-${{ matrix.os }}-${{ env.COMMIT_SHORT_SHA }}.json
+              run: go test ./cmd ./cmd/init ./cmd/install -json > TestResults-${{ matrix.go-version }}-${{ matrix.os }}-${{ env.SHA }}.json
               env:
                   test: true
                   FOLDCLI_MONGO_URI: ${{ secrets.FOLDCLI_MONGO_URI }}
@@ -47,5 +39,5 @@ jobs:
               uses: actions/upload-artifact@v3
               if: always()
               with:
-                  name: Go-results-${{ matrix.go-version }}-${{ matrix.os }}-${{ env.COMMIT_SHORT_SHA }}
-                  path: TestResults-${{ matrix.go-version }}-${{ matrix.os }}-${{ env.COMMIT_SHORT_SHA }}.json
+                  name: Go-results-${{ matrix.go-version }}-${{ matrix.os }}-${{ env.SHA }}
+                  path: TestResults-${{ matrix.go-version }}-${{ matrix.os }}-${{ env.SHA }}.json
