@@ -36,7 +36,7 @@ jobs:
                   FOLDCLI_MONGO_URI: ${{ secrets.FOLDCLI_MONGO_URI }}
                   FOLDCLI_DB_NAME: foldcli-testing
             - name: Upload Go test results
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               if: always()
               with:
                   name: Go-results-${{ matrix.go-version }}-${{ matrix.os }}-${{ env.SHA }}
