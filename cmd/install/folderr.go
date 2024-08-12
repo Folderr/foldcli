@@ -86,19 +86,24 @@ var installFolderr = &cobra.Command{
 		cmd.Println("NPM appears to be installed")
 		cmd.Println("Checking for TypeScript installation")
 		tsc, err := utilities.FindSystemCommandVersion(cmd.OutOrStdout(), "tsc", true, "Version ")
-		if err != nil {
+		if err != nil && !strings.Contains(err.Error(), "Is tsc installed?") {
 			return err
 		}
 		swc, err := utilities.FindSystemCommandVersion(cmd.OutOrStdout(), "swc", true, "@swc/cli: ")
-		if err != nil {
+		if err != nil && !strings.Contains(err.Error(), "Is swc installed?") {
 			return err
 		}
 		if tsc == "" && swc == "" {
 			cmd.Println("Neither TypeScript nor SWC not installed. Aborting.")
 			cmd.Println("Install TypeScript or SWC before running this command!")
 			return nil
+		} else if tsc == "" {
+			cmd.Println("SWC appears to be installed")
+		} else if swc == "" {
+			cmd.Println("TypeScript appears to be installed")
+		} else {
+			cmd.Println("Both SWC and TypeScript are installed, try SWC first")
 		}
-		cmd.Println("TypeScript or SWC appears to be installed")
 
 		// Turn Node version into a int!
 		versions := []int{}

@@ -37,11 +37,15 @@ func TestInstall(t *testing.T) {
 	if err != nil {
 		t.Errorf(`Command "`+utilities.Constants.RootCmdName+` install folderr %v" failed because of error, %v`, args[0], err)
 	}
+	buildCmd := "npm run build:tsc"
+	if strings.Contains(actual.String(), "SWC appears to be installed") || strings.Contains(actual.String(), "Both SWC and TypeScript are installed") {
+		buildCmd = "npm run build"
+	}
 	suffix := []string{
 		"Clone successful",
 		"Checkout successful",
 		"Install seems to have gone correctly.",
-		`To build Folderr go to "` + sharedConfig.Directory + `" and type "npm run build:production"`,
+		`To build Folderr go to "` + sharedConfig.Directory + `" and type "` + buildCmd + `"`,
 	}
 	for _, i := range suffix {
 		if !strings.Contains(actual.String(), i) {

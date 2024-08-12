@@ -8,7 +8,7 @@ import (
 )
 
 func FindSystemCommandVersion(w io.Writer, command string, hasPrefix bool, prefix string) (string, error) {
-	execCmd, err := FindSystemCommand(w, command, []string{"-v"})
+	execCmd, err := FindSystemCommand(w, command, []string{"--version"})
 	if err != nil {
 		return "", err
 	}

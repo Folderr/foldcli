@@ -3,6 +3,7 @@ module github.com/Folderr/foldcli
 go 1.20
 
 require (
+	github.com/Masterminds/semver v1.5.0
 	github.com/fossoreslp/go-uuid-v4 v1.0.0
 	github.com/go-git/go-git/v5 v5.10.0
 	github.com/manifoldco/promptui v0.9.0
@@ -14,7 +15,6 @@ require (
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
-	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c // indirect
 	github.com/acomagu/bufpipe v1.0.4 // indirect
