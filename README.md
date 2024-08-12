@@ -1,6 +1,11 @@
 # foldcli
 The Folderr Management CLI
 
+[![Build](https://github.com/Folderr/foldcli/actions/workflows/build.yaml/badge.svg)](https://github.com/Folderr/foldcli/actions/workflows/build.yaml)
+[![Test](https://github.com/Folderr/foldcli/actions/workflows/test.yaml/badge.svg)](https://github.com/Folderr/foldcli/actions/workflows/test.yaml)
+[![Release Build](https://github.com/Folderr/foldcli/actions/workflows/release.yaml/badge.svg?event=release)](https://github.com/Folderr/foldcli/actions/workflows/release.yaml)
+
+
 ## More up-to-date documentation
 
 More up to date documentation can be found https://folderr.net/guides/cli/getting-started
