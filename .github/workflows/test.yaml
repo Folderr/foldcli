@@ -22,7 +22,7 @@ jobs:
                   echo "COMMIT_SHORT_SHA=$calculatedSha" >> $GITHUB_ENV
             - uses: actions/checkout@v3
             - name: Check Short SHA
-              uses: echo '${{ env.SHA }}'
+              run: echo '${{ env.SHA }}'
             - name: Setup Node
               uses: actions/setup-node@v3
               with:
@@ -38,7 +38,7 @@ jobs:
             - name: Make Short SHA
               run: echo ${GITHUB_SHA::7}
             - name: Test with Go & Output
-              run: go test ./cmd ./cmd/init ./cmd/install -json > TestResults-${{ matrix.go-version }}-${{ matrix.os }}-${{ env.SHA }}.json
+              run: go test ./cmd ./cmd/init ./cmd/install -json > TestResults-${{ matrix.go-version }}-${{ matrix.os }}-${{ env.COMMIT_SHORT_SHA }}.json
               env:
                   test: true
                   FOLDCLI_MONGO_URI: ${{ secrets.FOLDCLI_MONGO_URI }}
@@ -47,5 +47,5 @@ jobs:
               uses: actions/upload-artifact@v3
               if: always()
               with:
-                  name: Go-results-${{ matrix.go-version }}-${{ matrix.os }}-${{ env.SHA }}
-                  path: TestResults-${{ matrix.go-version }}-${{ matrix.os }}-${{ env.SHA }}.json
+                  name: Go-results-${{ matrix.go-version }}-${{ matrix.os }}-${{ env.COMMIT_SHORT_SHA }}
+                  path: TestResults-${{ matrix.go-version }}-${{ matrix.os }}-${{ env.COMMIT_SHORT_SHA }}.json
