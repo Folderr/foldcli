@@ -15,12 +15,12 @@ jobs:
             SHA: $(${{github.sha}}::8)
 
         steps:
+            - uses: actions/checkout@v3
             - name: Set short git commit SHA
               id: vars
               run: |
                   calculatedSha=$(git rev-parse --short ${{ github.sha }})
                   echo "COMMIT_SHORT_SHA=$calculatedSha" >> $GITHUB_ENV
-            - uses: actions/checkout@v3
             - name: Check Short SHA
               run: echo '${{ env.SHA }}'
             - name: Setup Node
